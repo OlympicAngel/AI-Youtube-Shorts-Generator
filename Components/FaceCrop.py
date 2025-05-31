@@ -1,6 +1,9 @@
+from typing import List
 import cv2
 import numpy as np
 from moviepy import *
+from moviepy.video.io.VideoFileClip import VideoFileClip  # ✅ precise import
+from Components.LanguageTasks import ClipSegment
 from Components.Speaker import detect_faces_and_speakers, Frames
 global Fps
 
@@ -141,15 +144,14 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
     cap.release()
     out.release()
 
-def combine_videos(video_with_audio, video_without_audio, output_filename):
+def combine_videos(video_with_audio:str, video_without_audio:str, output_filename:str):
     try:
         # Load video clips
         clip_with_audio = VideoFileClip(video_with_audio)
         clip_without_audio = VideoFileClip(video_without_audio)
 
         audio = clip_with_audio.audio
-
-        combined_clip = clip_without_audio.set_audio(audio)
+        combined_clip:VideoFileClip = clip_without_audio.with_audio(audio)
 
         global Fps
         combined_clip.write_videofile(output_filename, codec='libx264', audio_codec='aac', fps=Fps, preset='medium', bitrate='3000k')

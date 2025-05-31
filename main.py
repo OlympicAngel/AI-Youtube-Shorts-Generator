@@ -12,6 +12,8 @@ from Components.LanguageTasks import GetHighlight
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
 import uuid
 
+test = True
+
 def get_video_source():
     while True:
         print("Select video source:")
@@ -101,7 +103,7 @@ if(len(firstSegment) <= 3): # if no speakers metadata (len should be 4+)
 # redeclare type
 transcriptions: List[TranscribeSegmentType_withSpeakers]
 
-transcriptions = add_hebrew_sentiment(transcriptions)
+transcriptions = add_hebrew_sentiment(transcriptions) if not test else [(a,b,c,d,"") for a,b,c,d in transcriptions]
 transcriptions: List[TranscribeSegmentType_withSpeakersAndSentiment]
 
      
@@ -114,12 +116,12 @@ for text, start, end, speakers, sentiment in transcriptions:
 TransText = TransText[:-1]  # remove last comma
 
 # get highlights from transcriptions using GPT
-clipSegments = GetHighlight(TransText,shortTheme,test=False,)
+clipSegments = GetHighlight(TransText,shortTheme,test)
 if len(clipSegments) == 0: # Error no highlights found
     print("Error in getting highlight")
 
 # refine the clip segments using VAD
-refined_clipSegments = refine_transcript(Audio, clipSegments)
+refined_clipSegments = refine_transcript(Audio, clipSegments) if not test else clipSegments
 
 # trim video based on clip segments
 trimmedVideoPath = "trimmed.mp4"
