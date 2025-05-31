@@ -2,13 +2,16 @@ import json
 import os
 import faulthandler
 faulthandler.enable()
+from Components.TranscriptionTimingRefine import refine_transcript
 from Components.YoutubeDownloader import download_youtube_video
 from Components.Edit import extractAudio, crop_video
 from Components.Transcription import transcribeAudio
 from Components.LanguageTasks import GetHighlight
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
+import uuid
 
-def cache_path(video_path: str) -> str:
+
+def transcription_cache_path(video_path: str) -> str:
     return video_path + ".transcription.json"
 
 def save_transcription(path: str, data):
@@ -24,7 +27,7 @@ def save_transcription(path: str, data):
 def load_transcription(path: str):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
-    
+
 def get_video_source():
     while True:
         print("Select video source:")
@@ -63,7 +66,7 @@ def get_short_theme():
         else:
             print("Invalid input. Please enter 1, 2, 3, 4 or 5.\n")
             get_short_theme()
-            
+
 
 # Main logic
 isLocal = get_video_source()
@@ -82,40 +85,48 @@ else:
     else:
         print("Unable to Download the video")
         exit()
-
+# get audio from video
 Audio = extractAudio(Vid)
-if Audio:
-        cache_file = cache_path(Vid)
+if not Audio:
+     print("No audio file found")
 
-        if os.path.exists(cache_file):
-            transcriptions = load_transcription(cache_file)
-        else:
-            transcriptions = transcribeAudio(Audio)
-            if len(transcriptions) == 0:
-                exit()
-            save_transcription(cache_file, transcriptions)
-            print("Transcription saved to cache at '"+cache_file+"'.")
-            
-        if len(transcriptions) > 0:
-            TransText = "" 
+# check if transcription cache exists
+cache_file = transcription_cache_path(Vid)
+if os.path.exists(cache_file):
+    transcriptions = load_transcription(cache_file) #load it
+else: # else transcribe it
+    transcriptions = transcribeAudio(Audio)
+    if len(transcriptions) == 0:
+        exit()
+    save_transcription(cache_file, transcriptions) # save it 
+    print("Transcription saved to cache at '"+cache_file+"'.")
 
-            for text, start, end in transcriptions:
-                TransText += (f"{start} - {end}: {text}.\n")
+# error handling for empty transcriptions
+if len(transcriptions) == 0:
+     print("No transcriptions found")
+     
+# convert transcriptions to text format for GPT
+TransText = ""
+for text, start, end in transcriptions:
+    TransText += (f"{start} - {end}: {text}.\n")
 
-            clipSegments = GetHighlight(TransText,shortTheme)
-            if len(clipSegments) > 0:
-                print(f"AI picked {len(clipSegments)} segments")
+# get highlights from transcriptions using GPT
+clipSegments = GetHighlight(TransText,shortTheme,test=True)
+if len(clipSegments) == 0: # Error no highlights found
+    print("Error in getting highlight")
 
-                Output = "Out.mp4"
+# refine the clip segments using VAD
+refined_clipSegments = refine_transcript(Audio, clipSegments)
 
-                crop_video(Vid, Output, clipSegments)
-                croped = "croped.mp4"
+# trim video based on clip segments
+trimmedVideoPath = "trimmed.mp4"
+crop_video(Vid, trimmedVideoPath, clipSegments)
 
-                crop_to_vertical_debug("Out.mp4", croped,False)
-                combine_videos("Out.mp4", croped, "Final.mp4")
-            else:
-                print("Error in getting highlight")
-        else:
-            print("No transcriptions found")
-else:
-        print("No audio file found")
+# crop trimmed video to vertical format
+croppedVideoPath = "verticalCropped.mp4"
+crop_to_vertical_debug(trimmedVideoPath, croppedVideoPath,False)
+
+# combine trimmed and cropped videos into a single short
+uuid = uuid.uuid4()
+combine_videos(trimmedVideoPath, croppedVideoPath, f"Generated Shorts/{shortTheme.split(",")[0]}_{cache_file.split("\\").pop().split('.')[0]}_{str(uuid)}.mp4")
+    

@@ -159,7 +159,88 @@ User = """[
 ]"""
 
 
-def GetHighlight(Transcription,theme):
+def GetHighlight(Transcription,theme, test=False):
+    if test:
+        print(f"[not-ChatGPT]:using local json string for testing..")
+        json_string = """[
+  {
+    "start": "252.22",
+    "content": "הבאתי רדנק.",
+    "end": "252.82"
+  },
+  {
+    "start": "252.88",
+    "content": "מה זה.",
+    "end": "253.28"
+  },
+  {
+    "start": "253.42",
+    "content": "פרניבולת אני קראתי לה רדנק.",
+    "end": "254.82"
+  },
+  {
+    "start": "254.88",
+    "content": "היא כל הכך איתית אוקיי סליחה אמרת.",
+    "end": "256.7"
+  },
+  {
+    "start": "266.86",
+    "content": "רדנקי יאללה.",
+    "end": "267.4"
+  },
+  {
+    "start": "268.48",
+    "content": "לא.",
+    "end": "268.68"
+  },
+  {
+    "start": "268.78",
+    "content": "הרשר פטט מטומטם.",
+    "end": "269.74"
+  },
+  {
+    "start": "270.02",
+    "content": "למה עשינו את זה פרק קודם.",
+    "end": "271.14"
+  },
+  {
+    "start": "273.44",
+    "content": "שערי פה רדנה.",
+    "end": "274.26"
+  },
+  {
+    "start": "274.3",
+    "content": "בואי לפה.",
+    "end": "274.8"
+  },
+  {
+    "start": "275.92",
+    "content": "מיצי זה הכבשה.",
+    "end": "276.06"
+  },
+  {
+    "start": "276.06",
+    "content": "מיצי זה הכבשה הרדנה.",
+    "end": "277.26"
+  },
+  {
+    "start": "277.68",
+    "content": "אני שונא את הפרשר פטט המטומטם שלך שייני.",
+    "end": "279.48"
+  },
+  {
+    "start": "338.94",
+    "content": "יש מיצי קטן.",
+    "end": "339.66"
+  },
+  {
+    "start": "339.66",
+    "content": "יואו זה מיני מיצי.",
+    "end": "340.9"
+  }
+]"""
+        return extract_times(json_string)
+
     print("Getting Highlight from Transcription ")
     model="gpt-4.1-2025-04-14"
     # Price per 1K tokens (USD)
@@ -184,12 +265,12 @@ def GetHighlight(Transcription,theme):
     tokens_input = len(tokenizer_encoding.encode(Transcription))
     token_cached = len(tokenizer_encoding.encode(system))
     tokens_output = 13000 if isReasoning else 800  # estimate/completion length
-    total_cost_cached = (
+    total_cost = (
         (tokens_input + token_cached) * pricing[model]["input"] +
         tokens_output * pricing[model]["output"]
     ) / 1000000
     
-    total_cost = (
+    total_cost_cached = (
         tokens_input * pricing[model]["input"] +
         token_cached * pricing[model]["cached"] +
         tokens_output * pricing[model]["output"]
@@ -216,7 +297,7 @@ def GetHighlight(Transcription,theme):
         price_cached_input = cached_input_tokens * pricing[model]["cached"]
         price_output = output_tokens * pricing[model]["output"]
         total_cost = (price_input + price_output + price_cached_input) / 1000000
-        print(f"[ChatGPT]: API call cost: ${total_cost:.6f}")
+        print(f"[ChatGPT]: API call cost: ${total_cost:.6f} w/ {output_tokens} output tokens.")
 
         json_string = response.output_text
         json_string = json_string.replace("json", "")
@@ -224,51 +305,15 @@ def GetHighlight(Transcription,theme):
         
         print(f"[ChatGPT]: response - {json_string}")
 
-#         print(f"[not-ChatGPT]:using local json string for testing..")
-#         json_string = """[
-#    {
-#       "start": "956.736",
-#       "content": "רגע לא אמרנו את זה אבל ברגע שמישהו מגיע לחיים האדמים הוא יכול להרוג אנשים אחרים כמו אבוללה אין לו סיבה לעשות את זה אבל הוא יכול אסור להצבן אותם אסור להצבן אותם",
-#       "end": "976.96"
-#    },
-#    {
-#       "start": "976.96",
-#       "content": "אני אני כן עושים בולקר עושים בונקר אי אפשר שכרגע אין כיוון הוא כל אחד סתם חוצף בלוקים זה טוב שיין יצא אחראי על הדלת אני אביא לך טיפה רדסטון כן סטיקי פיסטונים ככה יש לי פשוט דברים של רדסטון קח זה אמור להספיק",
-#       "end": "1017.248"
-#    },
-#    {
-#       "start": "1017.248",
-#       "content": "אני רוצה שזה יהיה פרשיר פלייט אני רוצה שזה פרשיר פלייט שנעבור את זה פתח לבד אבל ככה פרשיר פלייט אובר אנגינרד לא לצורך אחי איזה יותר טוב אנחנו מתנסים זה לא טוב",
-#       "end": "1037.152"
-#    },
-#    {
-#       "start": "1037.152",
-#       "content": "אבל אתה צריך שהוא יפתח לך בשביל לצאת החוצה אתה לא יכול לצאת החוצה אם לא לא חכה חכה חכה חכה אני חשב יש לי רצפה יותר טובה סים סים ככה ככה שתי שורות כזה ככה רגע אני בונה ואני משתמשתי עם כל הבלוקים שהסחקתיים של לבנות איזה יופי נעם אני בונה עם כל הקראפסינטבל שלקחתי להם אחי זה כל כך מצחיק",
-#       "end": "1059.44"
-#    },
-#    {
-#       "start": "1129.488",
-#       "content": "מה קורה שם מה קרה אני רוצה סגברים למה למה מה עשיתי לכם נשמעת יניב זה עובד אה זה עובד תעזרו לי תעזרו לי אני באה לכם הביתה תתמדדו שאני חסרי לבית אני רוצה הסבר מה קרה זה חשוב מה קרה",
-#       "end": "1155.648"
-#    },
-#    {
-#       "start": "1155.648",
-#       "content": "ועכשיו היא אדומה רגע אתה עכשיו יכולה להרוג אנשים לא אני לא הורגת אף אחד אין לי אין לי כלום אולימפיק אני ליטרלי רגע מה קרה אני רק תחשבו על זה ככה תחשבו על זה ככה אפשר פשוט להרוג את נוגה אם היא יצאה החוצה אתם יכולים אבל אין לכם למה יש למה יהיה פחות סיכון עליהם",
-#       "end": "1168.112"
-#    },
-#    {
-#       "start": "1188.58",
-#       "content": "אני בשוק זה כל כך אם אמרתי שזה לא אחד מאיתנו אני כן אפתח שזה יהיה אבל לא שקיע לכם שמח לכם לשנייה רק אומר שם הרבה אנשים מאחוריי אנחנו כנראה נצליח להיפרד מהקוצריות כי אני לא יכול לסמוך על כולם",
-#       "end": "1200"
-#    }
-# ]"""
-
         res = extract_times(json_string)
         firstItem = res[0]
         if firstItem["end_time"] == firstItem["start_time"]:
             Ask = input("[Chat-GPT]: Error - Get Highlights again[{total_cost}$] (y/n) -> ").lower()
             if Ask == "y":
                 res = GetHighlight(Transcription)
+        
+        print(f"AI picked {len(res)} segments")
+        
         return res
     except Exception as e:
         print(f"[Chat-GPT]: Error in GetHighlight: {e}")
