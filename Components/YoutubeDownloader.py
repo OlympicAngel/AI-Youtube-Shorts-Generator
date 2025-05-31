@@ -1,4 +1,6 @@
 import os
+import re
+import unicodedata
 from pytubefix import YouTube
 import ffmpeg
 
@@ -9,6 +11,11 @@ def get_video_size(stream):
 def download_youtube_video(url):
     try:
         yt = YouTube(url)
+
+        output_file = os.path.join('videos', f"{sanitize_filename(yt.title)}.mp4")
+        if os.path.exists(output_file):
+            print(f"File already exists: {output_file}")
+            return output_file
 
         video_streams = yt.streams.filter(type="video").order_by('resolution').desc()
         audio_stream = yt.streams.filter(only_audio=True).first()
@@ -33,7 +40,6 @@ def download_youtube_video(url):
             audio_file = audio_stream.download(output_path='videos', filename_prefix="audio_")
 
             print("Merging video and audio...")
-            output_file = os.path.join('videos', f"{yt.title}.mp4")
             stream = ffmpeg.input(video_file)
             audio = ffmpeg.input(audio_file)
             stream = ffmpeg.output(stream, audio, output_file, vcodec='libx264', acodec='aac', strict='experimental')
@@ -59,3 +65,9 @@ def download_youtube_video(url):
 if __name__ == "__main__":
     youtube_url = input("Enter YouTube video URL: ")
     download_youtube_video(youtube_url)
+
+def sanitize_filename(title):
+    # Normalize Unicode, remove problematic chars
+    safe_title = unicodedata.normalize('NFKD', title)
+    safe_title = re.sub(r'[\\/*?:"<>|]', "", safe_title)
+    return safe_title

@@ -1,6 +1,9 @@
+from typing import List
 from moviepy.video.io.VideoFileClip import VideoFileClip
-from moviepy.editor import VideoFileClip
-import subprocess
+
+from moviepy.editor import VideoFileClip, concatenate_videoclips
+
+from Components.LanguageTasks import ClipSegment
 
 def extractAudio(video_path):
     try:
@@ -15,10 +18,21 @@ def extractAudio(video_path):
         return None
 
 
-def crop_video(input_file, output_file, start_time, end_time):
+
+def crop_video(input_file: str, output_file: str, segments: List[ClipSegment]) -> None:
+    subclips = []
+
     with VideoFileClip(input_file) as video:
-        cropped_video = video.subclip(start_time, end_time)
-        cropped_video.write_videofile(output_file, codec='libx264')
+        for segment in segments:
+            subclip = video.subclip(segment["start_time"], segment["end_time"])
+            subclips.append(subclip)
+
+        final_clip = concatenate_videoclips(subclips, method="compose")
+        final_clip.write_videofile(output_file, codec='libx264')
+
+        for clip in subclips:
+            clip.close()
+        final_clip.close()
 
 # Example usage:
 if __name__ == "__main__":

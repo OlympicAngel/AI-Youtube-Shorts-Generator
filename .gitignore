@@ -8,9 +8,20 @@
 *.gif
 *.mp4
 *.webm
+*.transcription.json
 
 # Virtual environment
 venv/
+.venv/
+.venv/*
+/.venv/
+.venv
+/videos
+**/Lib/
+**/Lib/*
+**/site-packages/
+**/site-packages/*
 
 # Environment variables
 .env
+

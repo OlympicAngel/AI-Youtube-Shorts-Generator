@@ -1,28 +1,51 @@
-from faster_whisper import WhisperModel
-import torch
+import os
+import subprocess
+import json
+from pathlib import Path
+import sys
 
-def transcribeAudio(audio_path):
+def transcribeAudio(path):
     try:
-        print("Transcribing audio...")
-        Device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(Device)
-        model = WhisperModel("base.en", device="cuda" if torch.cuda.is_available() else "cpu")
-        print("Model loaded")
-        segments, info = model.transcribe(audio=audio_path, beam_size=5, language="en", max_new_tokens=128, condition_on_previous_text=False)
-        segments = list(segments)
-        # print(segments)
-        extracted_texts = [[segment.text, segment.start, segment.end] for segment in segments]
-        return extracted_texts
+        print("Transcribing audio (subprocess)...")
+
+        venv_python = Path(".venv/Scripts/python.exe")
+        env = os.environ.copy()
+
+        process = subprocess.Popen(
+            [venv_python, "Components/transcribe_worker.py", path],
+            stdout=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+            env=env,
+            encoding="utf-8"
+        )
+
+        output_lines = []
+        for line in process.stdout:
+            try:
+                parsed = json.loads(line)
+                output_lines = parsed
+            except json.JSONDecodeError as e:
+                raise RuntimeError(f"\nJSON parsing error: {e}\nRaw Line Output: {repr(line)}")
+            
+        process.wait()
+        
+        print(len(output_lines))
+
+
+        if process.returncode != 0 and not output_lines:
+            raise RuntimeError("Subprocess failed with no output")
+        
+        print("Transcription subprocess completed")
+
+        if isinstance(output_lines, dict) and "error" in output_lines:
+            raise RuntimeError(output_lines["error"])
+
+        print("Transcription completed")
+        print("Total segments:", len(output_lines))
+                
+        return output_lines
+
     except Exception as e:
-        print("Transcription Error:", e)
+        print("Transcription Error:", json.dumps({"error": str(e)}))
         return []
-
-if __name__ == "__main__":
-    audio_path = "audio.wav"
-    transcriptions = transcribeAudio(audio_path)
-    print("Done")
-    TransText = ""
-
-    for text, start, end in transcriptions:
-        TransText += (f"{start} - {end}: {text}")
-    print(TransText)

@@ -4,111 +4,142 @@ from moviepy.editor import *
 from Components.Speaker import detect_faces_and_speakers, Frames
 global Fps
 
-def crop_to_vertical(input_video_path, output_video_path):
+
+def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False, fallback_crop_center=True):
     detect_faces_and_speakers(input_video_path, "DecOut.mp4")
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
     cap = cv2.VideoCapture(input_video_path, cv2.CAP_FFMPEG)
     if not cap.isOpened():
         print("Error: Could not open video.")
         return
 
-    original_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    original_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-    vertical_height = int(original_height)
-    vertical_width = int(vertical_height * 9 / 16)
-    print(vertical_height, vertical_width)
-
-
-    if original_width < vertical_width:
-        print("Error: Original video width is less than the desired vertical width.")
-        return
-
-    x_start = (original_width - vertical_width) // 2
-    x_end = x_start + vertical_width
-    print(f"start and end - {x_start} , {x_end}")
-    print(x_end-x_start)
-    half_width = vertical_width // 2
-
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (vertical_width, vertical_height))
     global Fps
     Fps = fps
-    print(fps)
-    count = 0
-    for _ in range(total_frames):
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    original_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    original_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    vertical_width = int(original_height * 9 / 16)
+
+    out = cv2.VideoWriter(
+            output_video_path,
+            cv2.VideoWriter_fourcc(*"mp4v"),
+            fps,
+            (vertical_width, original_height)
+        )
+
+    def get_focus_center(prev_frame,frame, face_box=None):
+        if face_box:
+            x, y, x1, y1 = face_box
+            return [0,(x + x1) // 2]
+        if fallback_crop_center:
+            return [1,detect_salient_motion_region(prev_frame,frame)]
+        return frame.shape[1] // 2
+
+    def detect_salient_motion_region(prev_frame, curr_frame):
+        height, width = curr_frame.shape[:2]
+        cx, cy = width // 2, height // 2
+
+        # Define allowed bounds (±30% of frame size around center)
+        x_min, x_max = int(cx - width * 0.3), int(cx + width * 0.3)
+        y_min, y_max = int(cy - height * 0.3), int(cy + height * 0.3)
+
+        if prev_frame is None:
+            return cx, cy
+
+        # Crop UI
+        y_start, y_end = int(height * 0.15), int(height * 0.85)
+        prev_crop = prev_frame[y_start:y_end, :]
+        curr_crop = curr_frame[y_start:y_end, :]
+
+        prev_gray = cv2.cvtColor(prev_crop, cv2.COLOR_BGR2GRAY)
+        curr_gray = cv2.cvtColor(curr_crop, cv2.COLOR_BGR2GRAY)
+
+        prev_blur = cv2.GaussianBlur(prev_gray, (5, 5), 0)
+        curr_blur = cv2.GaussianBlur(curr_gray, (5, 5), 0)
+
+        diff = cv2.absdiff(prev_blur, curr_blur)
+        _, motion_mask = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)
+        motion_mask = cv2.morphologyEx(motion_mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+
+        moments = cv2.moments(motion_mask)
+        if moments["m00"] != 0:
+            x_center = int(moments["m10"] / moments["m00"])
+            y_center = int(moments["m01"] / moments["m00"]) + y_start
+
+            if x_min <= x_center <= x_max and y_min <= y_center <= y_max:
+                return x_center, y_center
+
+        return cx, cy
+
+    last_centerX = original_width // 2
+    alpha_center = 0.01  # smoothing factor center
+    alpha_face = 0.3  # smoothing factor for face detection
+    prev_frame = None
+
+    for i in range(total_frames):
         ret, frame = cap.read()
         if not ret:
-            print("Error: Could not read frame.")
             break
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-        if len(faces) >-1:
-            if len(faces) == 0:
-                (x, y, w, h) = Frames[count]
 
-            # (x, y, w, h) = faces[0]  
-            try:
-                #check if face 1 is active
-                (X, Y, W, H) = Frames[count]
-            except Exception as e:
-                print(e)
-                (X, Y, W, H) = Frames[count][0]
-                print(Frames[count][0])
-            
-            for f in faces:
-                x1, y1, w1, h1 = f
-                center = x1+ w1//2
-                if center > X and center < X+W:
-                    x = x1
-                    y = y1
-                    w = w1
-                    h = h1
-                    break
+        face_box = Frames[i] if i < len(Frames) and Frames[i] else None
+        detectType, result = get_focus_center(prev_frame, frame, face_box)
+        temporalAlpha = alpha_face if detectType == 0 else alpha_center
+        centerX = result[0] if isinstance(result, (list, tuple)) else result
+        centerX = int(temporalAlpha * centerX + (1 - temporalAlpha) * last_centerX)
+        last_centerX = centerX
 
-            # print(faces[0])
-            centerX = x+(w//2)
-            print(centerX)
-            print(x_start - (centerX - half_width))
-            if count == 0 or (x_start - (centerX - half_width)) <1 :
-                ## IF dif from prev fram is low then no movement is done
-                pass #use prev vals
-            else:
-                x_start = centerX - half_width
-                x_end = centerX + half_width
+        prev_frame = frame
 
+        # Debug draw
+        if debugView:
+            debug_frame = frame.copy()
+            cv2.line(debug_frame, (centerX, 0), (centerX, original_height), (0, 255, 0), 2)
+            if face_box:
+                x, y, x1, y1 = face_box
+                cv2.rectangle(debug_frame, (x, y), (x1, y1), (255, 0, 0), 2)
 
-                if int(cropped_frame.shape[1]) != x_end- x_start:
-                    if x_end < original_width:
-                        x_end += int(cropped_frame.shape[1]) - (x_end-x_start)
-                        if x_end > original_width:
-                            x_start -= int(cropped_frame.shape[1]) - (x_end-x_start)
-                    else:
-                        x_start -= int(cropped_frame.shape[1]) - (x_end-x_start)
-                        if x_start < 0:
-                            x_end += int(cropped_frame.shape[1]) - (x_end-x_start)
-                    print("Frame size inconsistant")
-                    print(x_end- x_start)
+        x_start = max(0, centerX - vertical_width // 2)
+        x_end = x_start + vertical_width
+        if x_end > original_width:
+            x_end = original_width
+            x_start = x_end - vertical_width
 
-        count += 1
-        cropped_frame = frame[:, x_start:x_end]
-        if cropped_frame.shape[1] == 0:
-            x_start = (original_width - vertical_width) // 2
+        cropping_base = debug_frame if debugView else frame
+        cropped = cropping_base[:, x_start:x_end]
+
+        # Fallback to center crop if the current crop is invalid
+        if cropped is None or cropped.shape[1] != vertical_width or cropped.shape[0] != original_height:
+            print(f"⚠️ Invalid crop at frame {i}, falling back to center crop.")
+            centerX = original_width // 2
+            x_start = max(0, centerX - vertical_width // 2)
             x_end = x_start + vertical_width
-            cropped_frame = frame[:, x_start:x_end]
-        
-        print(cropped_frame.shape)
+            if x_end > original_width:
+                x_end = original_width
+                x_start = x_end - vertical_width
+            cropped = cropping_base[:, x_start:x_end]
 
-        out.write(cropped_frame)
+        if cropped is None or not isinstance(cropped, np.ndarray):
+            print(f"❌ Skipped frame {i}: Cropped is None or not ndarray")
+            continue
+
+        if cropped.shape[0] != original_height or cropped.shape[1] != vertical_width:
+            print(f"❌ Skipped frame {i}: Unexpected shape {cropped.shape}, expected ({original_height}, {vertical_width})")
+            continue
+
+        if cropped.dtype != np.uint8:
+            print(f"❌ Skipped frame {i}: Invalid dtype {cropped.dtype}, expected uint8")
+            continue
+
+        try:
+            out.write(cropped)
+        except Exception as e:
+            print(f"❌ Error writing frame {i}: {e}")
+            continue
 
     cap.release()
     out.release()
-    print("Cropping complete. The video has been saved to", output_video_path, count)
-
-
 
 def combine_videos(video_with_audio, video_without_audio, output_filename):
     try:
@@ -134,7 +165,7 @@ if __name__ == "__main__":
     output_video_path = 'Croped_output_video.mp4'
     final_video_path = 'final_video_with_audio.mp4'
     detect_faces_and_speakers(input_video_path, "DecOut.mp4")
-    crop_to_vertical(input_video_path, output_video_path)
+    crop_to_vertical_debug(input_video_path, output_video_path)
     combine_videos(input_video_path, output_video_path, final_video_path)
 
 
