@@ -2,6 +2,7 @@ import json
 import os
 import faulthandler
 from typing import List
+from Components.EmotionMetadata import TranscribeSegmentType_withSpeakersAndSentiment, add_hebrew_sentiment
 from Components.SpeakersMetadata import TranscribeSegmentType_withSpeakers, assign_speaker, get_speakers_metadata
 from Components.TranscriptionTimingRefine import refine_transcript
 from Components.YoutubeDownloader import download_youtube_video
@@ -37,11 +38,11 @@ def get_short_theme():
         choice = input("Enter 1, 2, 3, 4 or 5: ").strip()
 
         if choice == '1':
-            return "funny, light, trolls, pranks, comedy, humor, hilarious, funny moments, dark-humor, funny-dialogs(using speakers data)"
+            return "funny, light, trolls, pranks, comedy, humor, hilarious, funny moments, dark-humor, funny-dialogs(using speakers data), mostly positive sentiment"
         elif choice == '2':
-            return "emotional, motivational, inspiring, uplifting, positive, heartwarming, sad, heartbreak, betrayal, love, romance, emotional-dialogs(using speakers data)"
+            return "emotional, motivational, inspiring, uplifting, positive, heartwarming, sad, heartbreak, betrayal, love, romance, emotional-dialogs(using speakers data), contrasting sentiment"
         elif choice == '3':
-            return "intense, action, thriller, suspense, dramatic, high-energy, adrenaline-pumping, shocking, dramatic-dialogs(using speakers data)"
+            return "intense, action, thriller, suspense, dramatic, high-energy, adrenaline-pumping, shocking, dramatic-dialogs(using speakers data), mostly negative sentiment"
         elif choice == '4':
             return "informational, educational, knowledge, facts, learning, science, culture, guide, how-to, tricks, life-hacks"
         elif choice == '5':
@@ -50,6 +51,15 @@ def get_short_theme():
             print("Invalid input. Please enter 1, 2, 3, 4 or 5.\n")
             get_short_theme()
 
+def remove_consecutive_duplicates(s: str) -> str:
+    words = s.split()
+    if not words:
+        return ""
+    result = [words[0]]
+    for w in words[1:]:
+        if w != result[-1]:
+            result.append(w)
+    return " ".join(result)
 
 # Main logic
 isLocal = get_video_source()
@@ -90,13 +100,17 @@ if(len(firstSegment) <= 3): # if no speakers metadata (len should be 4+)
     save_transcription(cache_file,transcriptions)
 # redeclare type
 transcriptions: List[TranscribeSegmentType_withSpeakers]
+
+transcriptions = add_hebrew_sentiment(transcriptions)
+transcriptions: List[TranscribeSegmentType_withSpeakersAndSentiment]
+
      
 # convert transcriptions to text format for GPT
 TransText = ""
-for text, start, end, speakers in transcriptions:
+for text, start, end, speakers, sentiment in transcriptions:
     clean_speakers = [("#"+s.replace("SPEAKER_", "")) for s in speakers]
-    TransText += json.dumps({'speakers': ", ".join(clean_speakers),'start':start,'end':end,'content':text},ensure_ascii=False,separators=(',', ':')) + ","
-
+    TransText += json.dumps({'speakers': ", ".join(clean_speakers),'in':start,'out':end,'content':remove_consecutive_duplicates(text),'sentiment':sentiment},
+                            ensure_ascii=False,separators=(',', ':')) + ","
 TransText = TransText[:-1]  # remove last comma
 
 # get highlights from transcriptions using GPT
