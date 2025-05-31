@@ -1,3 +1,14 @@
+This is a fork of https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator for this a have changed / added:
+- Whisper runs on Worker - prevent crush on windows.
+- Optinally load video from local rather than youtuber directly.
+- Transcription & video download caching.
+- GPT prompt improvment.
+- Hardcoded selection of GPT module.
+- Supports for GPT's "O" (reasoning) model with optimized prompt and universal API workflow.
+- Dialog to select theme - waht should GPT look for (Funny / Emotional / Intense / Informational).
+- Modified FaceCrop.py for: smoother transition, on failed detection attempt to focus on the attraction point around the center of the frame (fast moving objects around the center).
+- General fixed / optimization for my needs.
+
 # AI Youtube Shorts Generator
 
 AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4 and Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts. This tool is currently in version 0.1 and might have some bugs.
