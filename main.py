@@ -1,32 +1,15 @@
 import json
 import os
 import faulthandler
-faulthandler.enable()
+from typing import List
+from Components.SpeakersMetadata import TranscribeSegmentType_withSpeakers, assign_speaker, get_speakers_metadata
 from Components.TranscriptionTimingRefine import refine_transcript
 from Components.YoutubeDownloader import download_youtube_video
 from Components.Edit import extractAudio, crop_video
-from Components.Transcription import transcribeAudio
+from Components.Transcription import save_transcription, transcribeAudio, transcription_cache_path
 from Components.LanguageTasks import GetHighlight
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
 import uuid
-
-
-def transcription_cache_path(video_path: str) -> str:
-    return video_path + ".transcription.json"
-
-def save_transcription(path: str, data):
-    try:
-        print(f"Saving transcription to {path}...")
-        os.makedirs(os.path.dirname(path), exist_ok=True)  # Ensure dir exists
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False)
-        print("✅ Transcription successfully saved.")
-    except Exception as e:
-        print(f"❌ Failed to save transcription: {e}")
-
-def load_transcription(path: str):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
 
 def get_video_source():
     while True:
@@ -54,15 +37,15 @@ def get_short_theme():
         choice = input("Enter 1, 2, 3, 4 or 5: ").strip()
 
         if choice == '1':
-            return "funny, light, trolls, pranks, comedy, humor, hilarious, funny moments, dark-humor"
+            return "funny, light, trolls, pranks, comedy, humor, hilarious, funny moments, dark-humor, funny-dialogs(using speakers data)"
         elif choice == '2':
-            return "emotional, motivational, inspiring, uplifting, positive, heartwarming, sad, heartbreak, betryal, love, romance"
+            return "emotional, motivational, inspiring, uplifting, positive, heartwarming, sad, heartbreak, betrayal, love, romance, emotional-dialogs(using speakers data)"
         elif choice == '3':
-            return "intense, action, thriller, suspense, dramatic, high-energy, adrenaline-pumping, shocking"
+            return "intense, action, thriller, suspense, dramatic, high-energy, adrenaline-pumping, shocking, dramatic-dialogs(using speakers data)"
         elif choice == '4':
             return "informational, educational, knowledge, facts, learning, science, culture, guide, how-to, tricks, life-hacks"
         elif choice == '5':
-            return "funny, light, trolls. pranks, underdog, dark-humor, intense, emotional, weird, shocking, or thought-provoking"
+            return "funny, light, trolls. pranks, underdog, dark-humor, intense, emotional, weird, shocking, or thought-provoking, interesting-dialogs(using speakers data)"
         else:
             print("Invalid input. Please enter 1, 2, 3, 4 or 5.\n")
             get_short_theme()
@@ -90,28 +73,32 @@ Audio = extractAudio(Vid)
 if not Audio:
      print("No audio file found")
 
-# check if transcription cache exists
-cache_file = transcription_cache_path(Vid)
-if os.path.exists(cache_file):
-    transcriptions = load_transcription(cache_file) #load it
-else: # else transcribe it
-    transcriptions = transcribeAudio(Audio)
-    if len(transcriptions) == 0:
-        exit()
-    save_transcription(cache_file, transcriptions) # save it 
-    print("Transcription saved to cache at '"+cache_file+"'.")
+#get transcription (generate / load from cache)
+transcriptions = transcribeAudio(Vid,Audio)
 
-# error handling for empty transcriptions
-if len(transcriptions) == 0:
-     print("No transcriptions found")
+# check of alrady has speakers metadata
+firstSegment = transcriptions[0]
+if(len(firstSegment) <= 3): # if no speakers metadata (len should be 4+)
+    print("No speakers metadata found in transcription, generating...")
+    # get speakers metadata from audio
+    speakers = get_speakers_metadata(Audio)
+    # assign speakers to transcription segments
+    transcriptions = assign_speaker(transcriptions, speakers)
+    
+    # resave transcription with speakers metadata
+    cache_file = transcription_cache_path(Vid)
+    save_transcription(cache_file,transcriptions)
+# redeclare type
+transcriptions: List[TranscribeSegmentType_withSpeakers]
      
 # convert transcriptions to text format for GPT
 TransText = ""
-for text, start, end in transcriptions:
-    TransText += (f"{start} - {end}: {text}.\n")
+for text, start, end, speakers in transcriptions:
+    clean_speakers = [s.replace("SPEAKER_", "") for s in speakers]
+    TransText += json.dumps({'speakers': ",".join(clean_speakers),'start':start,'end':end,'text':text},ensure_ascii=False,separators=(',', ':'))
 
 # get highlights from transcriptions using GPT
-clipSegments = GetHighlight(TransText,shortTheme,test=True)
+clipSegments = GetHighlight(TransText,shortTheme,test=False)
 if len(clipSegments) == 0: # Error no highlights found
     print("Error in getting highlight")
 
@@ -128,5 +115,5 @@ crop_to_vertical_debug(trimmedVideoPath, croppedVideoPath,False)
 
 # combine trimmed and cropped videos into a single short
 uuid = uuid.uuid4()
-combine_videos(trimmedVideoPath, croppedVideoPath, f"Generated Shorts/{shortTheme.split(",")[0]}_{cache_file.split("\\").pop().split('.')[0]}_{str(uuid)}.mp4")
+combine_videos(trimmedVideoPath, croppedVideoPath, f"Generated Shorts/{shortTheme.split(",")[0]}_{Vid.split("\\").pop().split('.')[0]}_{str(uuid)}.mp4")
     

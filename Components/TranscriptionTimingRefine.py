@@ -7,7 +7,7 @@ import concurrent.futures
 from Components.LanguageTasks import ClipSegment
 
 # Max adjustment allowed when refining (in seconds)
-max_adjust = 0.4  
+max_adjust = 0.45  
 
 def refine_transcript(audio_path:str, transcript: List[ClipSegment]):
     print("Refining transcript timing...")
@@ -25,10 +25,10 @@ def refine_transcript(audio_path:str, transcript: List[ClipSegment]):
         return_seconds=True,
         threshold=0.65,
         min_speech_duration_ms=200,
-        min_silence_duration_ms=100,
+        min_silence_duration_ms=150,
         max_speech_duration_s=15,
-        speech_pad_ms=45,
-        progress_tracking_callback=lambda progress : print(f"[VAD]: Progress - {round(progress)}%") if round(progress,1) % 5 == 0 else None
+        speech_pad_ms=60,
+        progress_tracking_callback=lambda progress : print(f"[VAD]: Progress - {round(progress)}%") if round(progress,3) % 5 == 0 else None
     )
     
     # --- Segment refinement logic ---

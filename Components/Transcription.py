@@ -2,17 +2,35 @@ import os
 import subprocess
 import json
 from pathlib import Path
-import sys
+from typing import List, Tuple
 
-def transcribeAudio(path):
+TranscribeSegmentType = Tuple[str, float, float]
+
+
+def transcribeAudio(video_path: str,audio_path:str) -> list[TranscribeSegmentType]:
+    # check if transcription cache exists
+    cache_file = transcription_cache_path(video_path)
+    if os.path.exists(cache_file):
+        transcriptions = load_transcription(cache_file) #load it
+    else: # else transcribe it
+        transcriptions = transcribeAudio_logic(audio_path)
+        save_transcription(cache_file, transcriptions) # save it 
+        if len(transcriptions) == 0:
+            print("No transcriptions found")
+            exit()
+        print("Transcription saved to cache at '"+cache_file+"'.")
+        
+    return transcriptions
+
+def transcribeAudio_logic(audio_path: str): 
     try:
         print("Transcribing audio (subprocess)...")
 
-        venv_python = Path(".venv/Scripts/python.exe")
+        venv_python = Path("venv/Scripts/python.exe")
         env = os.environ.copy()
 
         process = subprocess.Popen(
-            [venv_python, "Components/transcribe_worker.py", path],
+            [venv_python, "Components/transcribe_worker.py", audio_path],
             stdout=subprocess.PIPE,
             text=True,
             bufsize=1,
@@ -29,9 +47,6 @@ def transcribeAudio(path):
                 raise RuntimeError(f"\nJSON parsing error: {e}\nRaw Line Output: {repr(line)}")
             
         process.wait()
-        
-        print(len(output_lines))
-
 
         if process.returncode != 0 and not output_lines:
             raise RuntimeError("Subprocess failed with no output")
@@ -48,4 +63,23 @@ def transcribeAudio(path):
 
     except Exception as e:
         print("Transcription Error:", json.dumps({"error": str(e)}))
-        return []
+        exit()
+
+
+# utils
+def transcription_cache_path(video_path: str) -> str:
+    return video_path + ".transcription.json"
+
+def save_transcription(path: str, data):
+    try:
+        print(f"Saving transcription to {path}...")
+        os.makedirs(os.path.dirname(path), exist_ok=True)  # Ensure dir exists
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+        print("✅ Transcription successfully saved.")
+    except Exception as e:
+        print(f"❌ Failed to save transcription: {e}")
+
+def load_transcription(path: str)->list[TranscribeSegmentType]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)

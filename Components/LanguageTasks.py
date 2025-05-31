@@ -1,7 +1,7 @@
 from openai import OpenAI
 
 from dotenv import load_dotenv
-from typing import List, TypedDict
+from typing import List, NotRequired, TypedDict
 import json
 import tiktoken  # Official tokenizer library
 
@@ -15,6 +15,7 @@ class ClipSegment(TypedDict):
     start_time: int
     end_time: int
     content: str
+    speakers: NotRequired[List[str]]  # Optional field for speaker names
 
 # Function to extract start and end times
 def extract_times(json_string) -> List[ClipSegment]:
@@ -37,11 +38,11 @@ def extract_times(json_string) -> List[ClipSegment]:
 
 
 reasoningSystem = """
-You are a meticulous content editor and narrative crafter. You’ll receive a full transcript (with timestamps) of a video. Follow these steps:
+You are a meticulous content editor and narrative crafter. You’ll receive a full transcript with metadata (timestamps,speakers) of a video. Follow these steps:
 
 ### 1. **Comprehension**
-- Read the entire transcript to understand its overall story, characters, and tone.  
-- **Do not select any content until you’ve fully absorbed the context.**
+- Read the entire transcript and evaluate context using metadata, understand its overall story, characters, dialogs and tone.
+- Keep in mind that some speakers may dominate the narrative, indicating they are the main character(s) with monologues or direct audience engagement.
 
 ### 2. **Topic Exploration**
 - Identify up to **10 distinct “highlightable” events / topics ** following the theme of ###.  
@@ -87,9 +88,10 @@ Return **only** a JSON array of objects in the following format:
 
 """
 
-gptSystem = """You are a highly skilled content editor and a story composer. You are given a raw transcript with timestamps of a raw video.
-First you need to read the whole transcript and understand the story of it, then you will be given a task to extract a highlight - a mini story from the transcript.
-this "highlight" should be a topic-continuous, engaging segments from the transcript that are all directly related and can be as a single short video that could go viral as a YouTube Short or TikTok video.    
+gptSystem = """You are a highly skilled content editor and a story composer. You are given a raw transcript with metadata(speakers & timestamps) of a raw video.
+First you need to read the whole transcript, evaluate metadata to understand the context,understand the dialogs balance and the whole story(you might notice that some speaker is more dominant - that because he is the main character of the story, and he has monologs / talking to the audience - this is part of the story)..
+Then you will be given a task to extract a highlight - a mini story from the transcript.
+this "highlight" should be a topic-continuous, engaging segments from the transcript and metadata that are all directly related and can be as a single short video that could go viral as a YouTube Short or TikTok video.    
 The highlight theme must be 1 of the follows: ###.
 the goal is to pick a topic / event that happens from the transcript and according to that pick only segments that tells that story and are connected to each other, you must use single topic only!
 
@@ -310,14 +312,16 @@ def GetHighlight(Transcription,theme, test=False):
         if firstItem["end_time"] == firstItem["start_time"]:
             Ask = input("[Chat-GPT]: Error - Get Highlights again[{total_cost}$] (y/n) -> ").lower()
             if Ask == "y":
-                res = GetHighlight(Transcription)
+                res = GetHighlight(Transcription,theme, test)
+            else:
+                exit()
         
         print(f"AI picked {len(res)} segments")
         
         return res
     except Exception as e:
         print(f"[Chat-GPT]: Error in GetHighlight: {e}")
-        return 0, 0
+        exit()
 
 
 if __name__ == "__main__":

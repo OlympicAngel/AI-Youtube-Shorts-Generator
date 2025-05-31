@@ -1,7 +1,7 @@
 from typing import List
 from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy import VideoFileClip, concatenate_videoclips
 
-from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 from Components.LanguageTasks import ClipSegment
 
@@ -24,7 +24,7 @@ def crop_video(input_file: str, output_file: str, segments: List[ClipSegment]) -
 
     with VideoFileClip(input_file) as video:
         for segment in segments:
-            subclip = video.subclip(segment["start_time"], segment["end_time"])
+            subclip = video.subclipped(segment["start_time"], segment["end_time"])
             subclips.append(subclip)
 
         final_clip = concatenate_videoclips(subclips, method="compose")

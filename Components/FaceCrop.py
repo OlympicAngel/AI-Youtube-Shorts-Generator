@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-from moviepy.editor import *
+from moviepy import *
+from moviepy.video.io.VideoFileClip import VideoFileClip  # ✅ precise import
 from Components.Speaker import detect_faces_and_speakers, Frames
 global Fps
 
@@ -148,8 +149,7 @@ def combine_videos(video_with_audio, video_without_audio, output_filename):
         clip_without_audio = VideoFileClip(video_without_audio)
 
         audio = clip_with_audio.audio
-
-        combined_clip = clip_without_audio.set_audio(audio)
+        combined_clip:VideoFileClip = clip_without_audio.with_audio(audio)
 
         global Fps
         combined_clip.write_videofile(output_filename, codec='libx264', audio_codec='aac', fps=Fps, preset='medium', bitrate='3000k')
