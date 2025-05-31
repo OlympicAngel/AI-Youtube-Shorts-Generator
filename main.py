@@ -94,11 +94,13 @@ transcriptions: List[TranscribeSegmentType_withSpeakers]
 # convert transcriptions to text format for GPT
 TransText = ""
 for text, start, end, speakers in transcriptions:
-    clean_speakers = [s.replace("SPEAKER_", "") for s in speakers]
-    TransText += json.dumps({'speakers': ",".join(clean_speakers),'start':start,'end':end,'text':text},ensure_ascii=False,separators=(',', ':'))
+    clean_speakers = [("#"+s.replace("SPEAKER_", "")) for s in speakers]
+    TransText += json.dumps({'speakers': ", ".join(clean_speakers),'start':start,'end':end,'content':text},ensure_ascii=False,separators=(',', ':')) + ","
+
+TransText = TransText[:-1]  # remove last comma
 
 # get highlights from transcriptions using GPT
-clipSegments = GetHighlight(TransText,shortTheme,test=False)
+clipSegments = GetHighlight(TransText,shortTheme,test=False,)
 if len(clipSegments) == 0: # Error no highlights found
     print("Error in getting highlight")
 

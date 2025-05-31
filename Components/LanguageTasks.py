@@ -103,12 +103,13 @@ Rules:
 - Make the general video(all the picked segments) in a way that "tells a story" around the topic so viewers could relate more.  
 - you must NOT pick segments from the START(start is around 5% the duration of the video).
 - DONT USE the first 1.5 minutes of the video.
-- The whole video(highlight) duration must be less than 80 seconds **but must be more then 30 seconds total**. 
-- You may pick segments that are not directly one after each other if it still talks about the same topic.
-- Try not to choose segments that the content is repeating or doesn't add value to the highlight.
+- The whole video(highlight, the selected segments) summed duration must be less than 80 seconds **but must be more then 30 seconds total**. 
+- You allowed to pick segments that are not directly one after each other (if it still talks about the same topic/theme).
+- Don't choose following segments that the content is repeating or doesn't add value to the highlight.
 - Make sure the start/end time of each picked segment is not altered/changes from the original segment's.
+- You are **forbidden to merge segments**, you must return each segment as it is in the original transcript.
 
-Return only JSON in this format:
+Return only JSON array in this format:
 [
   {
     "start": "start time in seconds",
@@ -118,8 +119,9 @@ Return only JSON in this format:
   //other segments that directly relate to the same topic
 ]
 
-- You may reorder segments (in the json's array) if it better tells the story.
-- Make SURE that the generated JOSN actually tells the whole story of the topic and is understandable, not repeating.
+- You must **NOT** alter the start/end time of the segments, they must be exactly as in the original transcript.
+- You may (and even should) reorder segments (in the output's json array) to better tells the story.
+- Make SURE that the generated JSON actually tells the whole story of the topic and is understandable, not repeating.
 - Make sure to correctly calculate the generated duration, again it must be **more than 30** seconds while less then 80 seconds.
 
 
