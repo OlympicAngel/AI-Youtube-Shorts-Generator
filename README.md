@@ -1,14 +1,15 @@
 This is a fork of https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator for this a have changed / added:
 - Whisper runs on Worker - prevent crush on windows.
-- Optinally load video from local rather than youtuber directly.
+- Optional load video from local rather than youtuber directly.
 - Transcription & video download caching.
-- GPT prompt improvment.
-- Hardcoded selection of GPT module.
+- GPT prompt improvements.
+- Hardcoded selection of GPT module selection.
 - Supports for GPT's "O" (reasoning) model with optimized prompt and universal API workflow.
-- Dialog to select theme - waht should GPT look for (Funny / Emotional / Intense / Informational).
+- Dialog to select theme - what should GPT look for (Funny / Emotional / Intense / Informational).
 - Modified FaceCrop.py for: smoother transition, on failed detection attempt to focus on the attraction point around the center of the frame (fast moving objects around the center).
+- Timing refinement using silero-vad preventing "hard cuts" at a start / end of a sub-clip (audio).
 - General fixed / optimization for my needs.
-- Timing refinement using silero-vad preventing "hard cuts" at a start / end of a sub-clip (audio)
+
 
 # AI Youtube Shorts Generator
 
