@@ -1,0 +1,7 @@
+Emotional / Motivational / Love,
+Select segments that are:
+- **Emotional or motivational** (sentiments swing from “pos” to “neg” or vice versa to build drama).  
+- Include **heartwarming or heartbreaking narratives** (romance, betrayal, friendship).  
+- Scenes where a speaker expresses vulnerability, hope, or inspiration—especially if another speaker responds.  
+- Emphasize dialogues with contrasting sentiment tags (e.g., a “neg” moment followed by a “pos” uplift).  
+- Build a mini-story that takes the viewer on an emotional journey (e.g., sadness → realization → hope).

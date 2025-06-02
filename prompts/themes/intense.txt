@@ -1,0 +1,7 @@
+Intense / Action / Thriller,
+Select segments that are:
+- **High-energy or suspenseful** (mostly “neg” or “neu” evolving into “pos” if there’s a resolution).  
+- Focus on **dramatic moments, shocking reveals, or conflict**.  
+- Scenes where speaker sentiment is tense—arguments, urgent exclamations, or cliffhangers.  
+- Emphasize fast pacing: short bursts of speech, abrupt transitions, or exclamatory dialogue.  
+- Build a mini-story that conveys a sense of danger or urgency, culminating in a dramatic peak or twist.

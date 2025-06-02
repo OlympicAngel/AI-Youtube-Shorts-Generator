@@ -154,7 +154,7 @@ def combine_videos(video_with_audio:str, video_without_audio:str, output_filenam
         combined_clip:VideoFileClip = clip_without_audio.with_audio(audio)
 
         global Fps
-        combined_clip.write_videofile(output_filename, codec='libx264', audio_codec='aac', fps=Fps, preset='medium', bitrate='3000k')
+        combined_clip.write_videofile(output_filename, codec='h264_nvenc', audio_codec='aac', fps=Fps, preset='medium', bitrate='3000k')
         print(f"Combined video saved successfully as {output_filename}")
     
     except Exception as e:

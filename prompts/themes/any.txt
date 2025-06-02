@@ -1,0 +1,7 @@
+Wildcard / Attention-Seeker,
+Select segments that are:
+- **Any combination** of comedy, drama, thrill, or education—optimized purely to grab and hold attention.  
+- Look for the **most emotionally charged moments** (whether “pos” or “neg”) and/or the funniest lines.  
+- You can mix speaker dialogues of different sentiments as long as each chosen segment **contributes** to an attention-grabbing arc.  
+- Emphasize variety (e.g., a funny quip followed by a dramatic reveal followed by an informative nugget).  
+- Build a mini-story that feels unpredictable—viewers shouldn’t know what’s coming next, but each segment still belongs to a single “meta-story” or captivating thread.

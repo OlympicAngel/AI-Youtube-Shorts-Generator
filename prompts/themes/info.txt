@@ -1,0 +1,7 @@
+Informational / Educational,
+Select segments that are:
+- **Fact-driven or instructional** (neutral/“neu” or mildly “pos” sentiment).  
+- Focus on **knowledge transfer**—definitions, “how-to” steps, scientific or cultural facts, life hacks.  
+- Dialogue where one speaker explains and one listens (use speaker IDs to maintain clarity).  
+- Exclude purely emotional or comedic tangents—stick to content that teaches or informs.  
+- Build a mini-story that functions like a quick lesson or tutorial, progressing logically from introduction → detail → conclusion.

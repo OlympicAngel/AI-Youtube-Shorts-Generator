@@ -8,11 +8,13 @@ from Components.TranscriptionTimingRefine import refine_transcript
 from Components.YoutubeDownloader import download_youtube_video
 from Components.Edit import extractAudio, crop_video
 from Components.Transcription import save_transcription, transcribeAudio, transcription_cache_path
-from Components.LanguageTasks import GetHighlight
+from Components.LanguageTasks import GetHighlight, readPromptFile
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
 import uuid
 
-test = True
+# https://discourse.psychopy.org/t/hack-to-enable-hardware-accelerated-video-decoding-in-moviepy-aka-moviestim3/10331
+
+test = False
 
 def get_video_source():
     while True:
@@ -40,15 +42,15 @@ def get_short_theme():
         choice = input("Enter 1, 2, 3, 4 or 5: ").strip()
 
         if choice == '1':
-            return "funny, light, trolls, pranks, comedy, humor, hilarious, funny moments, dark-humor, funny-dialogs(using speakers data), mostly positive sentiment"
+            return readPromptFile("themes/funny")
         elif choice == '2':
-            return "emotional, motivational, inspiring, uplifting, positive, heartwarming, sad, heartbreak, betrayal, love, romance, emotional-dialogs(using speakers data), contrasting sentiment"
+            return readPromptFile("themes/emotional")
         elif choice == '3':
-            return "intense, action, thriller, suspense, dramatic, high-energy, adrenaline-pumping, shocking, dramatic-dialogs(using speakers data), mostly negative sentiment"
+            return readPromptFile("themes/intense")
         elif choice == '4':
-            return "informational, educational, knowledge, facts, learning, science, culture, guide, how-to, tricks, life-hacks"
+            return readPromptFile("themes/info")
         elif choice == '5':
-            return "funny, light, trolls. pranks, underdog, dark-humor, intense, emotional, weird, shocking, or thought-provoking, interesting-dialogs(using speakers data)"
+            return readPromptFile("themes/any")
         else:
             print("Invalid input. Please enter 1, 2, 3, 4 or 5.\n")
             get_short_theme()
@@ -109,10 +111,11 @@ transcriptions: List[TranscribeSegmentType_withSpeakersAndSentiment]
      
 # convert transcriptions to text format for GPT
 TransText = ""
-for text, start, end, speakers, sentiment in transcriptions:
-    clean_speakers = [("#"+s.replace("SPEAKER_", "")) for s in speakers]
-    TransText += json.dumps({'speakers': ", ".join(clean_speakers),'in':start,'out':end,'content':remove_consecutive_duplicates(text),'sentiment':sentiment},
-                            ensure_ascii=False,separators=(',', ':')) + ","
+for text, start, end, speakers_raw, sentiment in transcriptions:
+    speakers = ", ".join([("#"+s.replace("SPEAKER_", "")) for s in speakers_raw])
+    TransText += f"[{speakers}] {start}->{end}: '{remove_consecutive_duplicates(text)}' ({sentiment})\n"
+    # TransText += json.dumps({'speakers': speakers,'in':start,'out':end,'content':remove_consecutive_duplicates(text),'sentiment':sentiment},
+    #                         ensure_ascii=False,separators=(',', ':')) + ","
 TransText = TransText[:-1]  # remove last comma
 
 # get highlights from transcriptions using GPT
@@ -133,5 +136,5 @@ crop_to_vertical_debug(trimmedVideoPath, croppedVideoPath,False)
 
 # combine trimmed and cropped videos into a single short
 uuid = uuid.uuid4()
-combine_videos(trimmedVideoPath, croppedVideoPath, f"Generated Shorts/{shortTheme.split(",")[0]}_{Vid.split("\\").pop().split('.')[0]}_{str(uuid)}.mp4")
+combine_videos(trimmedVideoPath, croppedVideoPath, f"Generated Shorts/{shortTheme.split("/")[0]}_{Vid.split("\\").pop().split('.')[0]}_{str(uuid)}.mp4")
     
