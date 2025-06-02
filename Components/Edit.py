@@ -170,7 +170,7 @@ def crop_video(
             # Composite both together for the transition
             transition_clip: CompositeVideoClip = CompositeVideoClip(
                 [movingA, movingB], size=(W, H)
-            ).with_effects([SuperSample(transition_duration/movingA.fps,8)])
+            ).with_effects([SuperSample(transition_duration/movingA.fps/1.5,9)])
             
             
             # Append prev_main, then transition; carry curr_main forward

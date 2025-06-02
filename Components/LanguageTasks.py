@@ -203,7 +203,7 @@ def GetHighlight(Transcription,theme, test=False):
 
         json_string = response.output_text
         json_string = json_string.replace("json", "")
-        json_string = json_string.replace("```", "").split("]")[0] # sometimes gpt will output after the json
+        json_string = json_string.replace("```", "").split("]")[0] + "]" # sometimes gpt will output after the json
         
         print(f"[ChatGPT]: response - {json_string}")
 
