@@ -11,6 +11,7 @@
 *.transcription.json
 
 # Virtual environment
+/*_env/
 venv/
 .venv/
 .venv/*
@@ -25,3 +26,4 @@ venv/
 # Environment variables
 .env
 
+*.log

@@ -1,20 +1,17 @@
-import json
-import os
-import faulthandler
+
+global test
+test = True
+
 from typing import List
+from Components.Editor import edit_video_ffmpeg_py, extractAudio
 from Components.EmotionMetadata import TranscribeSegmentType_withSpeakersAndSentiment, add_hebrew_sentiment
 from Components.SpeakersMetadata import TranscribeSegmentType_withSpeakers, assign_speaker, get_speakers_metadata
 from Components.TranscriptionTimingRefine import refine_transcript
 from Components.YoutubeDownloader import download_youtube_video
-from Components.Edit import extractAudio, crop_video
 from Components.Transcription import save_transcription, transcribeAudio, transcription_cache_path
 from Components.LanguageTasks import GetHighlight, readPromptFile
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
 import uuid
-
-# https://discourse.psychopy.org/t/hack-to-enable-hardware-accelerated-video-decoding-in-moviepy-aka-moviestim3/10331
-
-test = False
 
 def get_video_source():
     while True:
@@ -128,7 +125,8 @@ refined_clipSegments = refine_transcript(Audio, clipSegments) if not test else c
 
 # trim video based on clip segments
 trimmedVideoPath = "trimmed.mp4"
-crop_video(Vid, trimmedVideoPath, clipSegments)
+edit_video_ffmpeg_py(Vid,trimmedVideoPath,clipSegments,gap_threshold=15)
+
 
 # crop trimmed video to vertical format
 croppedVideoPath = "verticalCropped.mp4"

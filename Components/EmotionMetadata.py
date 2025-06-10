@@ -8,20 +8,22 @@ TranscribeSegmentType_withSpeakersAndSentiment = tuple[Unpack[TranscribeSegmentT
 
 prefix = "[SpeakersMetadata]: "
 
-# Load Hebrew sentiment model
-model_name = "dicta-il/dictabert-sentiment"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(
-    model_name
-)
-sentiment_analysis = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0)
-
 class SentimentResult(TypedDict):
     label: str
     score: float
 
 def add_hebrew_sentiment(transcriptions: List[TranscribeSegmentType_withSpeakers]) -> List[TranscribeSegmentType_withSpeakersAndSentiment]:
     print(prefix + "Adding Hebrew sentiment analysis to transcriptions...")
+    
+    # Load Hebrew sentiment model
+    model_name = "dicta-il/dictabert-sentiment"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        model_name
+    )
+    sentiment_analysis = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0)
+
+    
     results = []
     full_texts = [seg[0] for seg in transcriptions]
 

@@ -6,6 +6,7 @@ from pyannote.audio import Pipeline
 import os
 import torch
 from typing_extensions import Unpack, TypeVarTuple  # requires typing_extensions
+from pyannote.core import Annotation
 
 
 from Components.LanguageTasks import ClipSegment
@@ -27,7 +28,7 @@ def get_speakers_metadata(audio_path):
     pipeline.to(torch.device("cuda"))
 
     with Spinner(prefix + "Running diarization (speaker detection)"):
-        diarization = pipeline(audio_path)
+        diarization:Annotation  = pipeline(audio_path)
 
     speaker_segments:list[speakerSegmentType] = [
         (turn.start, turn.end, speaker)
