@@ -1,7 +1,4 @@
 
-global test
-test = True
-
 from typing import List
 from Components.Editor import edit_video_ffmpeg_py, extractAudio
 from Components.EmotionMetadata import TranscribeSegmentType_withSpeakersAndSentiment, add_hebrew_sentiment
@@ -12,6 +9,8 @@ from Components.Transcription import save_transcription, transcribeAudio, transc
 from Components.LanguageTasks import GetHighlight, readPromptFile
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
 import uuid
+
+test = True
 
 def get_video_source():
     while True:

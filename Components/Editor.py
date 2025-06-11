@@ -92,7 +92,15 @@ def apply_transition(A_file: str, B_file: str, output_file: str,
  
     # Add optional motion blur
     if motionBlurType == 'optical':
-        over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.5), mi_mode='mci', mc_mode='obmc', search_param=90,scd="none") # aobmc slower
+        #over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.5), mi_mode='mci', mc_mode='obmc', search_param=90,scd="none") # aobmc slower
+        over2 = (
+            ffmpeg
+            .filter(over2,'hwupload')
+            .filter('libplacebo', round(fps*2.5), frame_mixer='mitchell_clamp')
+            .filter('hwdownload')
+            .filter('format', 'yuv420p')  # Required to make it compatible with software filters
+            .filter('scale', 1920, 1080)
+        )
         over2 = ffmpeg.filter(over2, 'tmix', frames=8, weights="0.5 1 1 1 1 1 0.7 0.3")
 
     # Audio crossfade
@@ -112,7 +120,7 @@ def apply_transition(A_file: str, B_file: str, output_file: str,
         output_args['x265-params'] = 'crf=26'
 
     output = ffmpeg.output(over2, audio, output_file, **output_args,r=fps)
-    ffmpeg.run(output, overwrite_output=True, quiet=False)
+    ffmpeg.run(output, overwrite_output=True, quiet=True)
     
     
 def edit_video_ffmpeg_py(input_file: str, output_file: str,
