@@ -1,7 +1,8 @@
 import cv2
-import numpy as np
 #Face Detection function
 def detect_faces(video_file):
+    import numpy as np
+
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
     # Load the video
@@ -93,11 +94,3 @@ def crop_video(faces, input_file, output_file):
 
 
     return None
-if __name__ == "__main__":
-    input = r"Short.mp4"
-    faces = detect_faces(input)
-    print(faces)
-    crop_video(faces, input, "Cropped.mp4")
-    print("DONE")
-
-    

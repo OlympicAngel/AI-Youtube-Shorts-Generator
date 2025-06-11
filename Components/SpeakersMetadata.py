@@ -1,16 +1,9 @@
-import sys
-import threading
-import time
-from typing import List, TypedDict
-from pyannote.audio import Pipeline
+from typing import List
 import os
 import torch
-from typing_extensions import Unpack, TypeVarTuple  # requires typing_extensions
-from pyannote.core import Annotation
-
-
-from Components.LanguageTasks import ClipSegment
+from typing_extensions import Unpack
 from Components.Transcription import TranscribeSegmentType
+
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True
 
@@ -20,6 +13,9 @@ speakerSegmentType = tuple[float, float, str]
 TranscribeSegmentType_withSpeakers = tuple[Unpack[TranscribeSegmentType], List[str]]
 
 def get_speakers_metadata(audio_path):
+    from pyannote.audio import Pipeline
+    from pyannote.core import Annotation
+
     hf_token = os.getenv("HF_TOKEN")
     if not hf_token:
         raise ValueError("Hugging Face token (HF_TOKEN) is not set in environment variables.")
@@ -40,12 +36,16 @@ def get_speakers_metadata(audio_path):
 # Spinner thread
 class Spinner:
     def __init__(self, message="Processing"):
+        import threading
         self.message = message
         self.spinner = ['|', '/', '-', '\\']
         self.running = False
         self.thread = threading.Thread(target=self.spin)
 
     def spin(self):
+        import sys
+        import time
+
         i = 0
         while self.running:
             sys.stdout.write(f"\r{self.message}... {self.spinner[i % len(self.spinner)]}")

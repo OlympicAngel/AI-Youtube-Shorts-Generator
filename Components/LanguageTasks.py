@@ -1,16 +1,4 @@
-import os
-from openai import OpenAI
-
-from dotenv import load_dotenv
 from typing import List, NotRequired, TypedDict
-import json
-import tiktoken  # Official tokenizer library
-
-
-load_dotenv()
-
-#client = OpenAI(base_url="http://localhost:4891/v1")
-client = OpenAI()
 
 class ClipSegment(TypedDict):
     start_time: int
@@ -20,6 +8,9 @@ class ClipSegment(TypedDict):
 
 # Function to extract start and end times
 def extract_times(json_string) -> List[ClipSegment]:
+    import json
+
+
     try:
         data = json.loads(json_string)
         result: List[ClipSegment] = []
@@ -37,108 +28,71 @@ def extract_times(json_string) -> List[ClipSegment]:
         print(f"Error in extract_times: {e}")
         return []
 
-User = """[
-  {
-    "start": "83.34",
-    "content": "כילד הוא השתוקק למכרות, אבל לא נתנו לו כי הוא ילד. עבורות השנים ואנחנו רואים את סטיב עובד בעבודות רגילות ומאוד מאוד משועמם ביום אחד. כשהוא משועמם בעבודה שלו, הוא לוקח את האוכל שלו ומתחיל לבנות ממנו בלוקים.",
-    "end": "97.7"
-  },
-  {
-    "start": "97.7",
-    "content": "מאחר והוא מבוגר, הוא הולך למכרה, הוא מוצא את הקובייה המוזרה הזאת והוא מגיע לעולם של מיינקראפט. הכל קורה נורא מהר, אין לנו איזשהו בילדאפ לדמות של סטיב, אבל זה לא ממש נחוץ.",
-    "end": "109.9"
-  },
-  {
-    "start": "114.02",
-    "content": "פה אני כבר יכול להגיד שג'ק בלק זורח כסטיב. בהתחלה הייתי סקפטי, אבל אי אפשר שלא לאהוב את ג'ק בלק. בסופו של דבר, סטיב במשחק הוא אנחנו. זאת אומרת, לסטיב אין אישיות ואין ממש דמות.",
-    "end": "123.3"
-  },
-  {
-    "start": "124.0",
-    "content": "אז אני מבין תלונות של אנשים שאומרים, מה זה מוזר? למה הוא כזה אנרגטי? זה לא סטיב... אבל מי זה סטיב? אחר כך אפילו לא מדבר במשחק, הקולות היחידים שהוא עושה זה... אז את האמת, אני כן שמח עם היצירתיות של היוצרים של הסרט, שהם נתנו לג'ק בליק ממש כאילו להיות הניר גטי כמו שהוא.",
-    "end": "137.98"
-  },
-  {
-    "start": "138.0",
-    "content": "בכל אופן אנחנו רואים יום אחד שסטיב מגלה את השער של הנדר והוא מדליק אותו עם הפנצים! הוא והכלב שלו הולכים לבפנים ואז הם מגלים את הפיגלינגס ואת המלכה של הפיגלינגס. היא לוקדת את סטיב, הכלב של סטיב בורח ליטרלי לעולם האמיתי.",
-    "end": "156.12"
-  },
-  {
-    "start": "156.12",
-    "content": "וזה קצת מצחיק לראות את הוולף המרובה יוצא לעולם המציאותי כי אנחנו יש שוט שלו על הר, אבל זה פשוט הר אמיתי. והוא אומר לו להחביא את הקובע שמחברת את העולם האמיתי לעולם של מיינקראפט, וככה הסרט נפתח.",
-    "end": "168.68"
-  }
-]"""
-
-
 def GetHighlight(Transcription,theme, test=False):
+    from openai import OpenAI
+    import tiktoken  # Official tokenizer library
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    client = OpenAI()
+
     if test:
         print(f"[not-ChatGPT]:using local json string for testing..")
         json_string = """[
   {
-    "start": "195.32",
-    "content": "אחי חיות זה נדיר יצח אני פשוט שאשכרה מעצמנו",
-    "end": "197.5"
+    "start": "254.75",
+    "content": "כי זה בגדול ריק ומורטי זה סנדבוקס ענק שאפשר לעשות בו מלא שטויות וליהנות",
+    "end": "259.83"
   },
   {
-    "start": "246.06",
-    "content": "קדימה רדנק אני סומך עליך שלא תמותי בשניה שנגיע לשם איכשהו",
-    "end": "249.26"
+    "start": "268.99",
+    "content": "כי זה הערך העליון בריק ומורטי לקחת כל מיני דברים מגניבים",
+    "end": "272.27"
   },
   {
-    "start": "253.38",
-    "content": "קרנבולת אני קראתי לה רדנק היא כל הכח איתית אוקיי סליחה אמרתי",
-    "end": "256.78"
+    "start": "272.27",
+    "content": "מפופ קולצר מסייפיי כל הדברים הגיקים המגניבים האלה",
+    "end": "276.19"
   },
   {
-    "start": "263.98",
-    "content": "קדימה בנות קדימה",
-    "end": "266.78"
+    "start": "276.19",
+    "content": "ולחבר אותם לכיף",
+    "end": "277.95"
   },
   {
-    "start": "266.78",
-    "content": "רדנקי יאללה קדימה",
-    "end": "268.42"
+    "start": "286.59",
+    "content": "כמו מורטי מיינדבלוורס קייבל טבעי 12 טוטל ריקול",
+    "end": "290.31"
   },
   {
-    "start": "275.94",
-    "content": "מיצי זה הכבשה",
-    "end": "277.3"
+    "start": "290.47",
+    "content": "מה זה הפרקים האלה תכלס",
+    "end": "291.55"
   },
   {
-    "start": "337.46",
-    "content": "יש מיצי קטן",
-    "end": "338.9"
+    "start": "291.55",
+    "content": "מוצאים איזה תירוץ שנותן להם פשוט להראות לנו מלאמלא רילזים בגדול",
+    "end": "296.47"
   },
   {
-    "start": "339.62",
-    "content": "יואו זה מיני מיצי",
-    "end": "340.82"
+    "start": "296.47",
+    "content": "פרקים של דקה",
+    "end": "297.67"
   },
   {
-    "start": "342.78",
-    "content": "זה אופר מיילי אקספרס",
-    "end": "343.78"
+    "start": "297.67",
+    "content": "המוח שלהם עובד בתדרים האלה לא התכנון הכבד הספונטני",
+    "end": "301.71"
   },
   {
-    "start": "343.78",
-    "content": "מיצי בואי",
-    "end": "344.46"
+    "start": "484.77",
+    "content": "שזה יותר זרם תודעה רפרנסים וצחוקים",
+    "end": "488.21"
   },
   {
-    "start": "354.42",
-    "content": "שלב שני שייני את הייתי",
-    "end": "355.1"
-  },
-  {
-    "start": "355.1",
-    "content": "אה כן",
-    "end": "356.5"
-  },
-  {
-    "start": "356.5",
-    "content": "אנחנו צריכים להשיג פאמקינג",
-    "end": "356.94"
+    "start": "511.19",
+    "content": "סדרה ענקית כיף גדול מושלמת לשכתא פשוט",
+    "end": "514.35"
   }
 ]"""
         return extract_times(json_string)
@@ -223,8 +177,9 @@ def GetHighlight(Transcription,theme, test=False):
         print(f"[Chat-GPT]: Error in GetHighlight: {e}")
         exit()
 
-
 def readPromptFile(filename):
+    import os
+
     try:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # <root>
         filepath = os.path.join(base_dir, 'prompts', f'{filename}.txt')

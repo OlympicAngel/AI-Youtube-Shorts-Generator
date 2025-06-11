@@ -1,5 +1,3 @@
-import os
-import random
 from typing import List, Optional
 import ffmpeg
 
@@ -55,7 +53,7 @@ def apply_transition(A_file: str, B_file: str, output_file: str,
                                motionBlurType: Optional[str],
                                width: int, height: int,
                                use_gpu: bool = True, codec: str = 'h264',fps=30.0):
-    
+    import random
     
     direction = random.choice(['left', 'right', 'up', 'down'])
 
@@ -90,22 +88,10 @@ def apply_transition(A_file: str, B_file: str, output_file: str,
     # Second overlay (B on top)
     over2 = ffmpeg.overlay(over1, B, shortest=1, **exprB)
  
-    # Add optional motion blur
-    if motionBlurType == 'optical':
-        #over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.5), mi_mode='mci', mc_mode='obmc', search_param=90,scd="none") # aobmc slower
-        over2 = (
-            ffmpeg
-            .filter(over2,'hwupload')
-            .filter('libplacebo', round(fps*2.5), frame_mixer='mitchell_clamp')
-            .filter('hwdownload')
-            .filter('format', 'yuv420p')  # Required to make it compatible with software filters
-            .filter('scale', 1920, 1080)
-        )
-        over2 = ffmpeg.filter(over2, 'tmix', frames=8, weights="0.5 1 1 1 1 1 0.7 0.3")
-
+ 
     # Audio crossfade
     audio = ffmpeg.filter([A.audio, B.audio], 'acrossfade', d=pad)
-
+    
     # Output
     output_args = {
         'c:a': 'aac',
@@ -118,11 +104,16 @@ def apply_transition(A_file: str, B_file: str, output_file: str,
     else:
         output_args['c:v'] = 'hevc_nvenc' if use_gpu else 'libx265'
         output_args['x265-params'] = 'crf=26'
-
+        
+ 
+    # Add optional motion blur
+    if motionBlurType == 'optical':
+        over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.5), mi_mode='mci', mc_mode='obmc', search_param=90,scd="none") # aobmc slower
+        over2 = ffmpeg.filter(over2, 'tmix', frames=8, weights="0.5 1 1 1 1 1 0.7 0.3")
+        
     output = ffmpeg.output(over2, audio, output_file, **output_args,r=fps)
-    ffmpeg.run(output, overwrite_output=True, quiet=True)
-    
-    
+    ffmpeg.run(output, overwrite_output=True, quiet=False)
+      
 def edit_video_ffmpeg_py(input_file: str, output_file: str,
                       segments: List[ClipSegment],
                       transitionPad: float = 0.4,
@@ -130,6 +121,8 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
                       gap_threshold: float = 15.0,
                       use_gpu: bool = True,
                       codec: str = 'h264'):
+    import os
+
     w, h, duration, fps = get_video_info(input_file)
     os.makedirs("temp_clips", exist_ok=True)
 

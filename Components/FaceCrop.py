@@ -1,14 +1,12 @@
-from typing import List
-import cv2
-import numpy as np
-from moviepy import *
 from moviepy.video.io.VideoFileClip import VideoFileClip  # ✅ precise import
-from Components.LanguageTasks import ClipSegment
-from Components.Speaker import detect_faces_and_speakers, Frames
 global Fps
 
 
 def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False, fallback_crop_center=True):
+    from Components.Speaker import detect_faces_and_speakers, Frames
+    import cv2
+    import numpy as np
+    
     detect_faces_and_speakers(input_video_path, "DecOut.mp4")
 
     cap = cv2.VideoCapture(input_video_path, cv2.CAP_FFMPEG)
@@ -159,16 +157,3 @@ def combine_videos(video_with_audio:str, video_without_audio:str, output_filenam
     
     except Exception as e:
         print(f"Error combining video and audio: {str(e)}")
-
-
-
-if __name__ == "__main__":
-    input_video_path = r'Out.mp4'
-    output_video_path = 'Croped_output_video.mp4'
-    final_video_path = 'final_video_with_audio.mp4'
-    detect_faces_and_speakers(input_video_path, "DecOut.mp4")
-    crop_to_vertical_debug(input_video_path, output_video_path)
-    combine_videos(input_video_path, output_video_path, final_video_path)
-
-
-

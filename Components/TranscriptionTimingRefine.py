@@ -1,15 +1,13 @@
-import json
-from math import floor
 from typing import List
-from silero_vad import load_silero_vad, read_audio, get_speech_timestamps
-import concurrent.futures
-
 from Components.LanguageTasks import ClipSegment
 
 # Max adjustment allowed when refining (in seconds)
 max_adjust = 0.45  
 
 def refine_transcript(audio_path:str, transcript: List[ClipSegment]):
+    from silero_vad import load_silero_vad, read_audio, get_speech_timestamps
+    import concurrent.futures
+    
     print("Refining transcript timing...")
         
     # Load VAD model on CUDA or CPU

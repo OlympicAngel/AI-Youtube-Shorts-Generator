@@ -1,28 +1,18 @@
 from ctypes import Array
-import tempfile
 import cv2
-import numpy as np
-import webrtcvad
-import wave
-import contextlib
-from pydub import AudioSegment
-import os
 
-# Update paths to the model files
-prototxt_path = "models/deploy.prototxt"
-model_path = "models/res10_300x300_ssd_iter_140000_fp16.caffemodel"
 temp_audio_path = "temp_audio.wav"
 
-# Load DNN model
-net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
-
-# Initialize VAD
-vad = webrtcvad.Vad(2)  # Aggressiveness mode from 0 to 3
-
 def voice_activity_detection(audio_frame, sample_rate=16000):
+    import webrtcvad
+
+    # Initialize VAD
+    vad = webrtcvad.Vad(2)  # Aggressiveness mode from 0 to 3
+
     return vad.is_speech(audio_frame, sample_rate)
 
 def extract_audio_from_video(video_path, audio_path):
+    from pydub import AudioSegment
     audio = AudioSegment.from_file(video_path)
     audio = audio.set_frame_rate(16000).set_channels(1)
     audio.export(audio_path, format="wav")
@@ -40,6 +30,12 @@ Frames = [] # [x,y,w,h]
 Frames: list[Array[int,int,int,int]]
 
 def detect_faces_and_speakers(input_video_path, output_video_path):
+    import os
+    import tempfile
+    import wave
+    import contextlib
+
+    
     # Return Frams:
     global Frames
     Frames = []
@@ -104,11 +100,3 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
     out.release()
     cv2.destroyAllWindows()
     os.remove(temp_audio_path)
-
-
-
-if __name__ == "__main__":
-    detect_faces_and_speakers()
-    print(Frames)
-    print(len(Frames))
-    print(Frames[1:5])

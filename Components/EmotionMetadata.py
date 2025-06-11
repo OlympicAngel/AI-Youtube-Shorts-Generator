@@ -1,7 +1,4 @@
 from typing import List, TypedDict, Unpack
-import tqdm
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-
 from Components.SpeakersMetadata import TranscribeSegmentType_withSpeakers
 
 TranscribeSegmentType_withSpeakersAndSentiment = tuple[Unpack[TranscribeSegmentType_withSpeakers], str]
@@ -13,6 +10,9 @@ class SentimentResult(TypedDict):
     score: float
 
 def add_hebrew_sentiment(transcriptions: List[TranscribeSegmentType_withSpeakers]) -> List[TranscribeSegmentType_withSpeakersAndSentiment]:
+    from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
+    import tqdm
+
     print(prefix + "Adding Hebrew sentiment analysis to transcriptions...")
     
     # Load Hebrew sentiment model

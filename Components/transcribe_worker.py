@@ -1,7 +1,7 @@
 from math import floor
 import sys
 import json
-from faster_whisper import WhisperModel, BatchedInferencePipeline
+from faster_whisper import WhisperModel
 import torch
 import re
 if torch.cuda.is_available():

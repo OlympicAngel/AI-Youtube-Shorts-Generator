@@ -2,7 +2,7 @@ import os
 import subprocess
 import json
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
 TranscribeSegmentType = Tuple[str, float, float]
 
@@ -24,9 +24,9 @@ def transcribeAudio(video_path: str,audio_path:str) -> list[TranscribeSegmentTyp
 
 def transcribeAudio_logic(audio_path: str): 
     try:
-        print("Transcribing audio (subprocess)...")
+        print(f"Transcribing audio (subprocess)...{audio_path}")
 
-        venv_python = Path("venv/Scripts/python.exe")
+        venv_python = Path("clean_env/Scripts/python.exe")
         env = os.environ.copy()
 
         process = subprocess.Popen(
