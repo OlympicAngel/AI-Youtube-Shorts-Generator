@@ -3,14 +3,6 @@ import cv2
 
 temp_audio_path = "temp_audio.wav"
 
-def voice_activity_detection(audio_frame, sample_rate=16000):
-    import webrtcvad
-
-    # Initialize VAD
-    vad = webrtcvad.Vad(2)  # Aggressiveness mode from 0 to 3
-
-    return vad.is_speech(audio_frame, sample_rate)
-
 def extract_audio_from_video(video_path, audio_path):
     from pydub import AudioSegment
     audio = AudioSegment.from_file(video_path)
@@ -29,7 +21,7 @@ global Frames
 Frames = [] # [x,y,w,h]
 Frames: list[Array[int,int,int,int]]
 
-def detect_faces_and_speakers(input_video_path, output_video_path):
+def detect_faces(input_video_path):
     import os
     import tempfile
     import wave
@@ -53,8 +45,6 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
 
     # Prepare video
     cap = cv2.VideoCapture(input_video_path)
-    w, h = int(cap.get(3)), int(cap.get(4))
-    out = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc(*'mp4v'), 30.0, (w, h))
 
     audio_generator = process_audio_frame(audio_data, sample_rate, 30)
 
@@ -63,13 +53,12 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
         if not ret:
             break
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=7, minSize=(60, 60))
-
         audio_frame = next(audio_generator, None)
         if audio_frame is None:
             break
-        is_speaking = voice_activity_detection(audio_frame, sample_rate)
+
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.2, minNeighbors=7, minSize=(60, 60))
 
         candidates = []
         max_lip_distance = 25
@@ -83,20 +72,36 @@ def detect_faces_and_speakers(input_video_path, output_video_path):
         for (x, y, x1, y1), lip_distance in candidates:
             cv2.rectangle(frame, (x, y), (x1, y1), (0, 255, 0), 2)
             if lip_distance >= max_lip_distance:
-                if is_speaking:
-                    cv2.putText(frame, "Active Speaker", (x, y - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                 Frames.append([x, y, x1, y1])
                 break
             else:
                 Frames.append(None)
 
-        out.write(frame)
-        cv2.imshow('Frame', frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     cap.release()
-    out.release()
     cv2.destroyAllWindows()
     os.remove(temp_audio_path)
+    
+    Frames = smooth_boxes(Frames)
+
+def smooth_boxes(frames, alpha=0.4):
+    smoothed = []
+    prev_box = None
+
+    for box in frames:
+        if box is None:
+            smoothed.append(None)
+        else:
+            if prev_box is None:
+                smoothed_box = box
+            else:
+                smoothed_box = [
+                    alpha * b + (1 - alpha) * pb
+                    for b, pb in zip(box, prev_box)
+                ]
+            smoothed.append(smoothed_box)
+            prev_box = smoothed_box
+
+    return smoothed

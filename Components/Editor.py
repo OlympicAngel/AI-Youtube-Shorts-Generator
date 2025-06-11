@@ -20,13 +20,26 @@ def extractAudio(video_path, audio_path="audio.wav"):
         print(f"An error occurred while extracting audio: {e.stderr.decode()}")
         return None
 
-def cut_segment(input_file: str, start: float, end: float, output_file: str, use_gpu: bool = True):
+def cut_segment(input_file: str, start: float, end: float, output_file: str, use_gpu: bool = True,codec: str = 'h264'):
     """
     Cut a segment [start, end] from input_file using ffmpeg-python.
     """
     input_kwargs = {'hwaccel': 'cuda'} if use_gpu else {}
-    stream = ffmpeg.input(input_file, ss=start, to=end, **input_kwargs)
-    stream = ffmpeg.output(stream, output_file, c='copy')
+    stream = ffmpeg.input(input_file, ss=start, t=end - start, **input_kwargs)
+    
+    output_args = {
+        'c:a': 'aac',
+        'b:a': '192k',
+        'preset': 'fast'
+    }
+    if codec == 'h264':
+        output_args['c:v'] = 'h264_nvenc' if use_gpu else 'libx264'
+        output_args.update({'rc': 'vbr', 'cq': '24'})
+    else:
+        output_args['c:v'] = 'hevc_nvenc' if use_gpu else 'libx265'
+        output_args['x265-params'] = 'crf=26'
+    
+    stream = ffmpeg.output(stream, output_file, **output_args)
     ffmpeg.run(stream, overwrite_output=True, quiet=True)
     
 def get_video_info(input_file: str):
@@ -108,20 +121,22 @@ def apply_transition(A_file: str, B_file: str, output_file: str,
  
     # Add optional motion blur
     if motionBlurType == 'optical':
-        over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.5), mi_mode='mci', mc_mode='obmc', search_param=90,scd="none") # aobmc slower
-        over2 = ffmpeg.filter(over2, 'tmix', frames=8, weights="0.5 1 1 1 1 1 0.7 0.3")
+        over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.5), mi_mode='mci', mc_mode='obmc', search_param=100,scd="none") # aobmc slower
+        over2 = ffmpeg.filter(over2, 'tmix', frames=6, weights="0.5 1 1  1 0.8 0.4")
         
     output = ffmpeg.output(over2, audio, output_file, **output_args,r=fps)
-    ffmpeg.run(output, overwrite_output=True, quiet=False)
+    ffmpeg.run(output, overwrite_output=True, quiet=True)
       
 def edit_video_ffmpeg_py(input_file: str, output_file: str,
                       segments: List[ClipSegment],
-                      transitionPad: float = 0.4,
+                      transitionPad: float = 0.45,
                       motionBlurType: Optional[str] = "optical",
                       gap_threshold: float = 15.0,
                       use_gpu: bool = True,
                       codec: str = 'h264'):
     import os
+    
+    print("extracting selected clips...")
 
     w, h, duration, fps = get_video_info(input_file)
     os.makedirs("temp_clips", exist_ok=True)
@@ -135,6 +150,8 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
         start = clipSeg['start_time'] - (transitionPad if i>0 and trans_needed[i-1] else 0) # if previous segment needs transition add START padding
         end = clipSeg['end_time'] + (transitionPad if i<n-1 and trans_needed[i] else 0) # if current segment needs transition add END padding
         cut_segment(input_file, max(0, start), min(duration, end), f"temp_clips/seg{i}.mp4", use_gpu)
+
+    print(f"segments extracted, applying transitions({trans_needed.count(True)})...")
 
     parts = []
     i = 0
@@ -198,6 +215,8 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
         i += 1 # increment to next segment
 
     # Final concat
+    
+    print("concatenating selected segments & transitions...")
     
     out_codec = {
             'h264': ('h264_nvenc' if use_gpu else 'libx264'),

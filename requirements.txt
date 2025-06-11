@@ -21,5 +21,4 @@ torchaudio==2.5.0+cu121
 tqdm==4.67.1
 transformers==4.52.4
 typing_extensions==4.14.0
-webrtcvad_wheels==2.0.14
 --extra-index-url https://download.pytorch.org/whl/cu121

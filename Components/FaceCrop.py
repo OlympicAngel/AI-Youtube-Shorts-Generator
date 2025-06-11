@@ -1,13 +1,16 @@
-from moviepy.video.io.VideoFileClip import VideoFileClip  # ✅ precise import
+from math import floor
+import ffmpeg
 global Fps
 
 
 def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False, fallback_crop_center=True):
-    from Components.Speaker import detect_faces_and_speakers, Frames
+    from Components.Speaker import detect_faces, Frames
     import cv2
     import numpy as np
     
-    detect_faces_and_speakers(input_video_path, "DecOut.mp4")
+    print("Detecting faces..")
+    
+    detect_faces(input_video_path)
 
     cap = cv2.VideoCapture(input_video_path, cv2.CAP_FFMPEG)
     if not cap.isOpened():
@@ -76,8 +79,10 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
 
     last_centerX = original_width // 2
     alpha_center = 0.01  # smoothing factor center
-    alpha_face = 0.3  # smoothing factor for face detection
+    alpha_face = 0.5  # smoothing factor for face detection
     prev_frame = None
+
+    print("Cropping vertical region of interest (face / moving objects)...")
 
     for i in range(total_frames):
         ret, frame = cap.read()
@@ -88,7 +93,7 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
         detectType, result = get_focus_center(prev_frame, frame, face_box)
         temporalAlpha = alpha_face if detectType == 0 else alpha_center
         centerX = result[0] if isinstance(result, (list, tuple)) else result
-        centerX = int(temporalAlpha * centerX + (1 - temporalAlpha) * last_centerX)
+        centerX = floor(temporalAlpha * centerX + (1 - temporalAlpha) * last_centerX)
         last_centerX = centerX
 
         prev_frame = frame
@@ -143,17 +148,20 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
     out.release()
 
 def combine_videos(video_with_audio:str, video_without_audio:str, output_filename:str):
+    print("Generating final video...")
     try:
-        # Load video clips
-        clip_with_audio = VideoFileClip(video_with_audio)
-        clip_without_audio = VideoFileClip(video_without_audio)
-
-        audio = clip_with_audio.audio
-        combined_clip:VideoFileClip = clip_without_audio.with_audio(audio)
-
-        global Fps
-        combined_clip.write_videofile(output_filename, codec='h264_nvenc', audio_codec='aac', fps=Fps, preset='medium', bitrate='3000k')
-        print(f"Combined video saved successfully as {output_filename}")
-    
-    except Exception as e:
-        print(f"Error combining video and audio: {str(e)}")
+        (
+            ffmpeg
+            .input(video_without_audio)
+            .video
+            .output(
+                ffmpeg.input(video_with_audio).audio,
+                output_filename,
+                vcodec='h264_nvenc',
+                acodec='aac',
+                preset='medium',
+            )
+            .run(overwrite_output=True,quiet=True)
+        )
+    except ffmpeg.Error as e:
+        print(f"Error combining video and audio:\n{e.stderr.decode()}")
