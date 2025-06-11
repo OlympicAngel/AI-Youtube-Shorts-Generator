@@ -121,20 +121,22 @@ def apply_transition(A_file: str, B_file: str, output_file: str,
  
     # Add optional motion blur
     if motionBlurType == 'optical':
-        over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.5), mi_mode='mci', mc_mode='obmc', search_param=100,scd="none") # aobmc slower
-        over2 = ffmpeg.filter(over2, 'tmix', frames=6, weights="0.5 1 1  1 0.8 0.4")
+        over2 = ffmpeg.filter(over2,'minterpolate',fps=round(fps*2.75), mi_mode='mci', mc_mode='obmc', search_param=100,scd="none") # aobmc slower
+        over2 = ffmpeg.filter(over2, 'tmix', frames=6, weights="0.5 1 1 1 0.8 0.4")
         
     output = ffmpeg.output(over2, audio, output_file, **output_args,r=fps)
     ffmpeg.run(output, overwrite_output=True, quiet=True)
       
 def edit_video_ffmpeg_py(input_file: str, output_file: str,
                       segments: List[ClipSegment],
-                      transitionPad: float = 0.45,
+                      transitionPad: float = 0.4,
                       motionBlurType: Optional[str] = "optical",
                       gap_threshold: float = 15.0,
                       use_gpu: bool = True,
                       codec: str = 'h264'):
     import os
+    
+    # TODO: threading for cutting segments
     
     print("extracting selected clips...")
 

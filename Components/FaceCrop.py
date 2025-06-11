@@ -26,12 +26,28 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
     original_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     vertical_width = int(original_height * 9 / 16)
 
-    out = cv2.VideoWriter(
-            output_video_path,
-            cv2.VideoWriter_fourcc(*"mp4v"),
-            fps,
-            (vertical_width, original_height)
-        )
+    # out = cv2.VideoWriter(
+    #         output_video_path,
+    #         cv2.VideoWriter_fourcc(*"mp4v"),
+    #         fps,
+    #         (vertical_width, original_height)
+    #     )
+    
+    import subprocess
+
+    ffmpeg_cmd = [
+        'ffmpeg', '-y', '-f', 'rawvideo',
+        '-vcodec', 'rawvideo',
+        '-pix_fmt', 'bgr24',
+        '-s', f'{vertical_width}x{original_height}',
+        '-r', str(fps),
+        '-i', '-',
+        '-an',
+        "-hide_banner",
+        '-vcodec', 'h264_nvenc',
+        output_video_path
+    ]
+    ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
 
     def get_focus_center(prev_frame,frame, face_box=None):
         if face_box:
@@ -78,8 +94,8 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
         return cx, cy
 
     last_centerX = original_width // 2
-    alpha_center = 0.01  # smoothing factor center
-    alpha_face = 0.5  # smoothing factor for face detection
+    alpha_center = 0.005  # smoothing factor center
+    alpha_face = 0.55  # smoothing factor for face detection
     prev_frame = None
 
     print("Cropping vertical region of interest (face / moving objects)...")
@@ -93,7 +109,7 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
         detectType, result = get_focus_center(prev_frame, frame, face_box)
         temporalAlpha = alpha_face if detectType == 0 else alpha_center
         centerX = result[0] if isinstance(result, (list, tuple)) else result
-        centerX = floor(temporalAlpha * centerX + (1 - temporalAlpha) * last_centerX)
+        centerX = round(temporalAlpha * centerX + (1 - temporalAlpha) * last_centerX)
         last_centerX = centerX
 
         prev_frame = frame
@@ -105,6 +121,7 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
             if face_box:
                 x, y, x1, y1 = face_box
                 cv2.rectangle(debug_frame, (x, y), (x1, y1), (255, 0, 0), 2)
+            cv2.imshow("crop preview", debug_frame)
 
         x_start = max(0, centerX - vertical_width // 2)
         x_end = x_start + vertical_width
@@ -139,13 +156,16 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
             continue
 
         try:
-            out.write(cropped)
+            ffmpeg_process.stdin.write(cropped.tobytes())
+            # out.write(cropped)
         except Exception as e:
             print(f"❌ Error writing frame {i}: {e}")
             continue
 
     cap.release()
-    out.release()
+    cv2.destroyAllWindows()
+    ffmpeg_process.stdin.close()
+    ffmpeg_process.wait()
 
 def combine_videos(video_with_audio:str, video_without_audio:str, output_filename:str):
     print("Generating final video...")

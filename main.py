@@ -126,7 +126,7 @@ refined_clipSegments = refine_transcript(Audio, clipSegments) if not test else c
 
 # trim video based on clip segments
 trimmedVideoPath = "trimmed.mp4"
-edit_video_ffmpeg_py(Vid,trimmedVideoPath,clipSegments,gap_threshold=15)
+edit_video_ffmpeg_py(Vid,trimmedVideoPath,clipSegments,gap_threshold=15,motionBlurType=None)
 
 
 # crop trimmed video to vertical format
