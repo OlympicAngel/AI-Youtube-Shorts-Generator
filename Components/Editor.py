@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Optional
 import ffmpeg
 
@@ -135,9 +136,7 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
                       use_gpu: bool = True,
                       codec: str = 'h264'):
     import os
-    
-    # TODO: threading for cutting segments
-    
+        
     print("extracting selected clips...")
 
     w, h, duration, fps = get_video_info(input_file)
@@ -148,13 +147,24 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
                     for i in range(n-1)]
 
     # Step 1: cut each segment, extending by pad if needed
-    for i, clipSeg in enumerate(segments):
-        start = clipSeg['start_time'] - (transitionPad if i>0 and trans_needed[i-1] else 0) # if previous segment needs transition add START padding
-        end = clipSeg['end_time'] + (transitionPad if i<n-1 and trans_needed[i] else 0) # if current segment needs transition add END padding
-        cut_segment(input_file, max(0, start), min(duration, end), f"temp_clips/seg{i}.mp4", use_gpu)
+    batch_size = 8  # Number of threads to run in parallel
+    
+    def cut_wrapper(i, clipSeg):
+        start = clipSeg['start_time'] - (transitionPad if i > 0 and trans_needed[i-1] else 0) # if previous segment needs transition add START padding
+        end = clipSeg['end_time'] + (transitionPad if i < n-1 and trans_needed[i] else 0) # if current segment needs transition add END padding
+        start = max(0, start)
+        end = min(duration, end)
+        cut_segment(input_file, max(0, start),  min(duration, end), f"temp_clips/seg{i}.mp4", use_gpu)
+        
+    # Run cut_segment in parallel threads
+    with ThreadPoolExecutor(max_workers=batch_size) as executor:
+        futures = [executor.submit(cut_wrapper, i, seg) for i, seg in enumerate(segments)]
+        for future in as_completed(futures):
+            future.result()  # Raise exceptions if any
+    
+
 
     print(f"segments extracted, applying transitions({trans_needed.count(True)})...")
-
     parts = []
     i = 0
     while i < n:

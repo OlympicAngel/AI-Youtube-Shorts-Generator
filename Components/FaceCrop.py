@@ -1,10 +1,9 @@
-from math import floor
 import ffmpeg
 global Fps
 
 
 def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False, fallback_crop_center=True):
-    from Components.Speaker import detect_faces, Frames
+    from Components.FaceDetection import detect_faces, Frames
     import cv2
     import numpy as np
     
@@ -26,15 +25,7 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
     original_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     vertical_width = int(original_height * 9 / 16)
 
-    # out = cv2.VideoWriter(
-    #         output_video_path,
-    #         cv2.VideoWriter_fourcc(*"mp4v"),
-    #         fps,
-    #         (vertical_width, original_height)
-    #     )
-    
     import subprocess
-
     ffmpeg_cmd = [
         'ffmpeg', '-y', '-f', 'rawvideo',
         '-vcodec', 'rawvideo',
@@ -121,7 +112,7 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
             if face_box:
                 x, y, x1, y1 = face_box
                 cv2.rectangle(debug_frame, (x, y), (x1, y1), (255, 0, 0), 2)
-            cv2.imshow("crop preview", debug_frame)
+            cv2.imshow("crop preview", debug_frame) #make sure it showing
 
         x_start = max(0, centerX - vertical_width // 2)
         x_end = x_start + vertical_width
@@ -167,7 +158,9 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
     ffmpeg_process.stdin.close()
     ffmpeg_process.wait()
 
-def combine_videos(video_with_audio:str, video_without_audio:str, output_filename:str):
+import ffmpeg
+
+def combine_videos(video_with_audio: str, video_without_audio: str, output_filename: str):
     print("Generating final video...")
     try:
         (
@@ -177,11 +170,28 @@ def combine_videos(video_with_audio:str, video_without_audio:str, output_filenam
             .output(
                 ffmpeg.input(video_with_audio).audio,
                 output_filename,
-                vcodec='h264_nvenc',
-                acodec='aac',
-                preset='medium',
+                vcodec='copy',  # try to copy video
+                acodec='copy',  # try to copy audio
+                loglevel='error'
             )
-            .run(overwrite_output=True,quiet=True)
+            .run(overwrite_output=True)
         )
     except ffmpeg.Error as e:
-        print(f"Error combining video and audio:\n{e.stderr.decode()}")
+        print("Copy failed, trying with GPU encode...")
+        try:
+            (
+                ffmpeg
+                .input(video_without_audio)
+                .video
+                .output(
+                    ffmpeg.input(video_with_audio).audio,
+                    output_filename,
+                    vcodec='h264_nvenc',  # GPU encoding
+                    acodec='aac',         # re-encode audio if needed
+                    preset='medium',
+                    loglevel='error'
+                )
+                .run(overwrite_output=True)
+            )
+        except ffmpeg.Error as e2:
+            print(f"Error combining video and audio:\n{e2.stderr.decode()}")

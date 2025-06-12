@@ -26,7 +26,7 @@ global Frames
 Frames = [] # [x,y,w,h]
 Frames: list[Array[int,int,int,int]]
 
-def detect_faces(input_video_path,batch_size=32):
+def detect_faces(input_video_path,batch_size=128):
     import os
     import tempfile
     import wave
