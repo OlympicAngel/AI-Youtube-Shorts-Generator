@@ -26,14 +26,15 @@ def add_hebrew_sentiment(transcriptions: List[TranscribeSegmentType_withSpeakers
     
     results = []
     full_texts = [seg[0] for seg in transcriptions]
+    max_chars = 512
+    min_chars_needed = 60
+
 
     for i, segment in tqdm.tqdm(enumerate(transcriptions), total=len(transcriptions)):
         content, t_start, t_end, speakers = segment
     
         context_parts = [content]
         context_len = len(content)
-        max_chars = 512
-        min_chars_needed = 60
 
         max_offset = 4  # 2 prev + 2 next = 4 tries
         offset = 1
@@ -57,7 +58,7 @@ def add_hebrew_sentiment(transcriptions: List[TranscribeSegmentType_withSpeakers
             offset += 1
     
         context = " ".join(context_parts)[:max_chars]
-        result: SentimentResult = sentiment_analysis(context,batch_size=32)[0]
+        result: SentimentResult = sentiment_analysis(context,batch_size=64)[0]
         map = {'Neutral': 'neu', 'Negative': 'neg', 'Positive': 'pos'}
         sentiment_str = f"{map[result['label']]}"
         results.append((content, t_start, t_end, speakers, sentiment_str))
