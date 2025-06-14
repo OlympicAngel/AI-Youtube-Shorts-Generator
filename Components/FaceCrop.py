@@ -158,8 +158,6 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
     ffmpeg_process.stdin.close()
     ffmpeg_process.wait()
 
-import ffmpeg
-
 def combine_videos(video_with_audio: str, video_without_audio: str, output_filename: str):
     print("Generating final video...")
     try:

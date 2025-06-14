@@ -32,6 +32,8 @@ def detect_faces(input_video_path,batch_size=128):
     import tempfile
     import wave
     import contextlib
+    import torch
+    import gc
 
     
     # Return Frams:
@@ -80,6 +82,11 @@ def detect_faces(input_video_path,batch_size=128):
     cv2.destroyAllWindows()
     os.remove(temp_audio_path)
     
+    del yolo_model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    
     Frames = smooth_boxes(Frames)
 
 def process_batch(frames):
@@ -90,24 +97,20 @@ def process_batch(frames):
     for frame, result in zip(frames, results):
         boxes = []
         for box in result.boxes:
-            class_idx = int(box.cls[0])  # get class index as integer
             confidence = box.conf[0].item()
             if int(box.cls.item()) == 0 and confidence > 0.5:  # person
                 x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                 w = x2 - x1
                 h = y2 - y1
                 Frames.append((x1, y1, w, h))
-            elif (confidence > 0.4 and # fairly high confidence
-                    (
-                        box.xywhn[2] >= 0.25 or # width is large than 25% of frame
-                        box.xywhn[3] >= 0.25    # height is large than 20% of frame
-                    )
-                  ):  # dominant object
-                x1, y1,x2 = map(int, box.xyxy[0].tolist())
-                w = x2 - x1
-                Frames.append((x1, y1, w, 1)) # set minimal box height - prefer to detect faces
-
-            
+            elif (confidence > 0.4):  # fairly high confidence
+                _, _, rw,rh = map(int, box.xywhn[0].tolist()) # get relative width and height
+                if (rw >= 0.2 or # width is large than 20% of frame
+                    rh >= 0.5):  # height is large than 50% of frame
+                    # dominant object
+                    x1, y1,x2 = map(int, box.xyxy[0].tolist())
+                    w = x2 - x1
+                    Frames.append((x1, y1, w, 1)) # set minimal box height - prefer to detect faces
 
         # within currant frame, analyze the largest lip distance
         candidates = []
