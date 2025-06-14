@@ -10,24 +10,16 @@ This is a fork of https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator for 
 - Timing refinement using silero-vad preventing "hard cuts" at a start / end of a sub-clip (audio).
 - Speakers detection for each segment - for better gpt results
 - Sentimental detection for each segment (using context for surrounding segments) - for better gpt results.
+- Complete replacement of Moviepy - with Python ffmpeg / raw ffmpeg(cli).
+- Replaced face detection to use YOLO5 - a GPU acc with detection of both human & general objects (attempt to focus frame central object as fall back).
+- cli support.
 - General fixed / optimization for my needs.
 
 
 # AI Youtube Shorts Generator
 
-AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4 and Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts. This tool is currently in version 0.1 and might have some bugs.
+AI Youtube Shorts Generator is a Python tool designed to generate engaging YouTube shorts from long-form videos. By leveraging the power of GPT-4, Whisper, it extracts the most interesting highlights, detects speakers, and crops the content vertically for shorts while focusing potential interest points.
 
-If you wish to add shorts generation into your application, here is an api to create shorts from long form videos :- https://docs.vadoo.tv/docs/guide/create-ai-clips
-
-### Youtube tutorial -> https://youtu.be/dKMueTMW1Nw
-
-### Medium tutorial -> https://medium.com/@anilmatcha/ai-youtube-shorts-generator-in-python-a-complete-tutorial-c3df6523b362
-
-![longshorts](https://github.com/user-attachments/assets/3f5d1abf-bf3b-475f-8abf-5e253003453a)
-
-[Demo Input Video](https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator/blob/main/videos/Blinken%20Admires%20'Friend%20Jai'%20As%20Indian%20EAM%20Gets%20Savage%20In%20Munich%3B%20'I'm%20Smart%20Enough...'%20%7C%20Watch.mp4)
-
-[Demo Output Video](https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator/blob/main/Final.mp4)
 
 ## Features
 
@@ -50,7 +42,7 @@ If you wish to add shorts generation into your application, here is an api to cr
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator.git
+   git clone https://github.com/OlympicAngel/AI-Youtube-Shorts-Generator.git
    cd AI-Youtube-Shorts-Generator
    ```
 
@@ -80,14 +72,22 @@ Create a `.env` file in the project root directory and add your OpenAI API key:
 
 ```bash
 OPENAI_API=your_openai_api_key_here
+HF_TOKEN=hugging_face_token_here
 ```
 
 ## Usage
 
-1. Ensure your `.env` file is correctly set up with your OpenAI API key.
+1. Ensure your `.env` file is correctly set up.
 2. Run the main script and enter the desired YouTube URL when prompted:
+   run time:
    ```bash
    python main.py
+   ```
+   and follow internal instructions.
+   ---
+   cli:
+    ```bash
+   python main.py "pathToYourVideo_OR_youtubeUrlWithHttp" "selectedTheme(1-5)" "testMode(True/False)"
    ```
 
 ## Contributing
@@ -97,21 +97,3 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 ## License
 
 This project is licensed under the MIT License.
-
-## Disclaimer
-
-This is a v0.1 release and might have some bugs. Please report any issues on the [GitHub Repository](https://github.com/SamurAIGPT/AI-Youtube-Shorts-Generator).
-
-### Other useful Video AI Projects
-
-[AI Influencer generator](https://github.com/SamurAIGPT/AI-Influencer-Generator)
-
-[Text to Video AI](https://github.com/SamurAIGPT/Text-To-Video-AI)
-
-[Faceless Video Generator](https://github.com/SamurAIGPT/Faceless-Video-Generator)
-
-[AI B-roll generator](https://github.com/Anil-matcha/AI-B-roll)
-
-[No-code AI Youtube Shorts Generator](https://www.vadoo.tv/clip-youtube-video)
-
-[Sora AI Video Generator](https://www.vadoo.tv/sora-ai-video-generator)

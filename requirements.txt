@@ -1,7 +1,6 @@
 faster_whisper==1.1.1
 ffmpeg==1.4
 ffmpeg_python==0.2.0
-moviepy==2.2.1
 numpy==2.3.0
 openai==1.86.0
 opencv_python==4.11.0.86
