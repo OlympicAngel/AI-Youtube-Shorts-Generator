@@ -82,6 +82,7 @@ def detect_faces(input_video_path,batch_size=128):
     cv2.destroyAllWindows()
     os.remove(temp_audio_path)
     
+    global yolo_model
     del yolo_model
     gc.collect()
     torch.cuda.empty_cache()
@@ -91,7 +92,7 @@ def detect_faces(input_video_path,batch_size=128):
 
 def process_batch(frames):
     global Frames
-    resized_batch = [cv2.resize(f, None, fx=0.2, fy=0.2)[..., ::-1] for f in frames]  # BGR → RGB
+    resized_batch = [cv2.resize(f, None, fx=0.5, fy=0.5)[..., ::-1] for f in frames]  # BGR → RGB
     results: list[Results] = yolo_model(resized_batch, verbose=False)
 
     for frame, result in zip(frames, results):

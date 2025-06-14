@@ -34,8 +34,12 @@ def crop_to_vertical_debug(input_video_path, output_video_path, debugView=False,
         '-r', str(fps),
         '-i', '-',
         '-an',
-        "-hide_banner",
         '-vcodec', 'h264_nvenc',
+        '-preset', 'fast',
+        '-rc', 'vbr',
+        '-cq', '24',
+        '-b:v', '0',
+        "-hide_banner",
         output_video_path
     ]
     ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)

@@ -234,11 +234,19 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
             'h264': ('h264_nvenc' if use_gpu else 'libx264'),
             'hevc': ('hevc_nvenc' if use_gpu else 'libx265'),
     }[codec]
+    
+    # Extract audio bitrate from the first input
+    probe = ffmpeg.probe(parts[0])
+    audio_stream_info = next(s for s in probe['streams'] if s['codec_type'] == 'audio')
+    src_bitrate = audio_stream_info.get('bit_rate')
+
+    # If bit_rate is not available, fallback to 192k
+    audio_bitrate = f"{int(int(src_bitrate) / 1000)}k" if src_bitrate else "192k"
 
     out_args = {
             'vcodec': out_codec,
             'acodec': 'aac',
-            'b:a': '192k',
+            'b:a': audio_bitrate,
     }
     if codec == 'h264':
             out_args.update({'preset': 'fast', 'rc': 'vbr', 'cq': '24'})
