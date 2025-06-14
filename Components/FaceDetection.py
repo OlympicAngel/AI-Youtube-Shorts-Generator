@@ -1,10 +1,11 @@
 from ctypes import Array
 import cv2
 from ultralytics import YOLO
-
+from ultralytics.engine.results import Results
 # Load YOLO model (runs on GPU if available)
 yolo_model = YOLO("yolov5nu.pt")  # or yolov5n.pt for faster
-yolo_model.to('cuda') 
+yolo_model.cuda(0)
+yolo_model.to('cuda')
 
 temp_audio_path = "temp_audio.wav"
 
@@ -83,33 +84,47 @@ def detect_faces(input_video_path,batch_size=128):
 
 def process_batch(frames):
     global Frames
-    resized_batch = [cv2.resize(f, None, fx=0.25, fy=0.25)[..., ::-1] for f in frames]  # BGR → RGB
-    results = yolo_model(resized_batch, verbose=False)
+    resized_batch = [cv2.resize(f, None, fx=0.2, fy=0.2)[..., ::-1] for f in frames]  # BGR → RGB
+    results: list[Results] = yolo_model(resized_batch, verbose=False)
 
     for frame, result in zip(frames, results):
         boxes = []
         for box in result.boxes:
-            if int(box.cls.item()) == 0:  # person
+            class_idx = int(box.cls[0])  # get class index as integer
+            confidence = box.conf[0].item()
+            if int(box.cls.item()) == 0 and confidence > 0.5:  # person
                 x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
                 w = x2 - x1
                 h = y2 - y1
-                boxes.append((x1, y1, w, h))
+                Frames.append((x1, y1, w, h))
+            elif (confidence > 0.4 and # fairly high confidence
+                    (
+                        box.xywhn[2] >= 0.25 or # width is large than 25% of frame
+                        box.xywhn[3] >= 0.25    # height is large than 20% of frame
+                    )
+                  ):  # dominant object
+                x1, y1,x2 = map(int, box.xyxy[0].tolist())
+                w = x2 - x1
+                Frames.append((x1, y1, w, 1)) # set minimal box height - prefer to detect faces
 
-        # Face selection logic
+            
+
+        # within currant frame, analyze the largest lip distance
         candidates = []
         max_lip_distance = 25
         for (x, y, w_face, h_face) in boxes:
             x1, y1 = x + w_face, y + h_face
-            lip_distance = abs((y + 2 * h_face // 3) - y1)
+            lip_distance = h_face / 3
             candidates.append(((x, y, x1, y1), lip_distance))
             max_lip_distance = max(max_lip_distance, lip_distance)
 
+        # Find the box with the maximum lip distance and set it as the frame's box
         for (x, y, x1, y1), lip_distance in candidates:
-            if lip_distance >= max_lip_distance:
+            if lip_distance == max_lip_distance:
                 Frames.append([x, y, x1, y1])
                 break
-        else:
-            Frames.append(None)
+            else:
+                Frames.append(None)
 
 def smooth_boxes(frames, alpha=0.4):
     smoothed = []
@@ -130,16 +145,3 @@ def smooth_boxes(frames, alpha=0.4):
             prev_box = smoothed_box
 
     return smoothed
-
-def detect_faces_yolo(frame):
-    resized = cv2.resize(frame, None, fx=0.25, fy=0.25)
-    results  = yolo_model(resized[..., ::-1], verbose=False)[0]
-    face_boxes = []
-    for box in results.boxes:
-        cls = int(box.cls.item())
-        if cls == 0:  # person class
-            x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
-            w = x2 - x1
-            h = y2 - y1
-            face_boxes.append((x1, y1, w, h))
-    return face_boxes
