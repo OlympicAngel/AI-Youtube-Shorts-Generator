@@ -1,6 +1,6 @@
 import time
 start_time = time.time()
-from Components.UserInput import input_get_theme, input_get_videoSource
+from Components.UserInput import input_get_theme, input_get_videoSource, test
 from typing import List
 from Components.Editor import edit_video_ffmpeg_py, extractAudio
 from Components.EmotionMetadata import TranscribeSegmentType_withSpeakersAndSentiment, add_hebrew_sentiment
@@ -10,8 +10,8 @@ from Components.Transcription import save_transcription, transcribeAudio, transc
 from Components.LanguageTasks import GetHighlight
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
 import uuid
-test = True
 
+print("is test run:", test)
 
 def remove_consecutive_duplicates(s: str) -> str:
     words = s.split()

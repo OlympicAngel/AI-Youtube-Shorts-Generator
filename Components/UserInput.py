@@ -3,6 +3,8 @@ from  os import path
 from Components.LanguageTasks import readPromptFile
 from Components.YoutubeDownloader import download_youtube_video
 
+test = (sys.argv[3] if len(sys.argv) >= 4 else input("Is this a test run? (true/false): ").strip().lower()) == "true"
+
 
 def input_get_theme():
     """
