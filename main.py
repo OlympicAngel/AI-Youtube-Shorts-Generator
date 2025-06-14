@@ -1,57 +1,17 @@
 import time
 start_time = time.time()
-
+from Components.UserInput import input_get_theme, input_get_videoSource
 from typing import List
 from Components.Editor import edit_video_ffmpeg_py, extractAudio
 from Components.EmotionMetadata import TranscribeSegmentType_withSpeakersAndSentiment, add_hebrew_sentiment
 from Components.SpeakersMetadata import TranscribeSegmentType_withSpeakers, assign_speaker, get_speakers_metadata
 from Components.TranscriptionTimingRefine import refine_transcript
-from Components.YoutubeDownloader import download_youtube_video
 from Components.Transcription import save_transcription, transcribeAudio, transcription_cache_path
-from Components.LanguageTasks import GetHighlight, readPromptFile
+from Components.LanguageTasks import GetHighlight
 from Components.FaceCrop import  combine_videos, crop_to_vertical_debug
 import uuid
-
 test = True
 
-def get_video_source():
-    while True:
-        print("Select video source:")
-        print("1 - Local")
-        print("2 - Online")
-        choice = input("Enter 1 or 2: ").strip()
-
-        if choice == '1':
-            return True   # Local
-        elif choice == '2':
-            return False  # Online
-        else:
-            print("Invalid input. Please enter 1 or 2.\n")
-
-def get_short_theme():
-    while True:
-        # underdog, dark-humor, intense, , weird, shocking, or thought-provoking
-        print("Select short theme:")
-        print("1 - Funny")
-        print("2 - Emotional")
-        print("3 - Intense")
-        print("4 - Informational")
-        print("5 - Any")
-        choice = input("Enter 1, 2, 3, 4 or 5: ").strip()
-
-        if choice == '1':
-            return readPromptFile("themes/funny")
-        elif choice == '2':
-            return readPromptFile("themes/emotional")
-        elif choice == '3':
-            return readPromptFile("themes/intense")
-        elif choice == '4':
-            return readPromptFile("themes/info")
-        elif choice == '5':
-            return readPromptFile("themes/any")
-        else:
-            print("Invalid input. Please enter 1, 2, 3, 4 or 5.\n")
-            get_short_theme()
 
 def remove_consecutive_duplicates(s: str) -> str:
     words = s.split()
@@ -63,32 +23,19 @@ def remove_consecutive_duplicates(s: str) -> str:
             result.append(w)
     return " ".join(result)
 
-# Main logic
-isLocal = get_video_source()
-
-shortTheme = get_short_theme()
+Vid = input_get_videoSource()
+shortTheme = input_get_theme()
 print("Selected short theme:", shortTheme)
 
-if isLocal:
-    Vid = input("Enter local video path: ").strip()
-else:
-    url = input("Enter YouTube video URL: ")
-    Vid = download_youtube_video(url)
-    if Vid:
-        Vid = Vid.replace(".webm", ".mp4")
-        print(f"Downloaded video and audio files successfully! at {Vid}")
-    else:
-        print("Unable to Download the video")
-        exit()
-# get audio from video
-Audio = extractAudio(Vid)
+# extract audio from video into local directory
+Audio = extractAudio(Vid,"audio.wav")
 if not Audio:
-     print("No audio file found")
+     raise FileNotFoundError("No audio file found after exacting audio from video. Please check the video file.")
 
 #get transcription (generate / load from cache)
 transcriptions = transcribeAudio(Vid,Audio)
 
-# check of alrady has speakers metadata
+# check of already has speakers metadata
 firstSegment = transcriptions[0]
 if(len(firstSegment) <= 3): # if no speakers metadata (len should be 4+)
     print("No speakers metadata found in transcription, generating...")
@@ -112,9 +59,7 @@ TransText = ""
 for text, start, end, speakers_raw, sentiment in transcriptions:
     speakers = ", ".join([("#"+s.replace("SPEAKER_", "")) for s in speakers_raw])
     TransText += f"[{speakers}] {start}->{end}: '{remove_consecutive_duplicates(text)}' ({sentiment})\n"
-    # TransText += json.dumps({'speakers': speakers,'in':start,'out':end,'content':remove_consecutive_duplicates(text),'sentiment':sentiment},
-    #                         ensure_ascii=False,separators=(',', ':')) + ","
-TransText = TransText[:-1]  # remove last comma
+TransText = TransText[:-1]  # remove last comma or \n
 
 # get highlights from transcriptions using GPT
 clipSegments = GetHighlight(TransText,shortTheme,test)

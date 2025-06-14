@@ -21,7 +21,7 @@ def download_youtube_video(url):
         #selected_stream = yt.streams.get_highest_resolution(progressive=False)
         selected_stream = yt.streams.filter(type="video").order_by("filesize").desc()[0]
         if(selected_stream == None):
-            raise ("No suitable video stream found.")
+            raise IndexError("[Youtube]: No suitable video stream found.")
         
         print(f"Resolution: {selected_stream.resolution}, Size: {get_video_size(selected_stream):.2f} MB.")
 
@@ -38,13 +38,13 @@ def download_youtube_video(url):
         input_kwargs = {'hwaccel': 'cuda'}
         stream = ffmpeg.input(video_file,**input_kwargs)
         audio = ffmpeg.input(audio_file,**input_kwargs)
-        stream = ffmpeg.output(stream, audio, output_file, vcodec='h264_nvenc', acodec='aac')
-        ffmpeg.run(stream, overwrite_output=True,quiet=False)
+        output = ffmpeg.output(stream, audio, output_file, vcodec='h264_nvenc', acodec='aac')
+        ffmpeg.run(output, overwrite_output=True,quiet=True)
 
         os.remove(video_file)
         os.remove(audio_file)
 
-        print(f"Downloaded: {yt.title} to 'videos' folder")
+        print(f"Downloaded: {yt.title}")
         print(f"File path: {output_file}")
         return output_file
 
@@ -54,6 +54,7 @@ def download_youtube_video(url):
         print("You can update them by running:")
         print("pip install --upgrade pytube ffmpeg-python")
         print("Also, ensure that ffmpeg is installed on your system and available in your PATH.")
+        return e
 
 def sanitize_filename(title):
     import re
