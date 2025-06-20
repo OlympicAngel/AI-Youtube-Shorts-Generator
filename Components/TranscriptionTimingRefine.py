@@ -31,7 +31,7 @@ def refine_transcript(audio_path:str, transcript: List[ClipSegment]):
     
     # --- Segment refinement logic ---
     def refine_segment(seg:ClipSegment) -> ClipSegment:
-        start_sec, end_sec, content = seg['start_time'], seg['end_time'], seg['content']
+        start_sec, end_sec = seg.start_time, seg.end_time
         refined_start, refined_end = start_sec, end_sec
 
         # Find closest start within ±max_adjust range
@@ -50,11 +50,12 @@ def refine_transcript(audio_path:str, transcript: List[ClipSegment]):
         if end_candidates:
             refined_end = min(end_candidates, key=lambda x: abs(x - end_sec))
 
-        return {
-            'start_time': refined_start,
-            'end_time': refined_end,
-            'content':content
-        }
+        return ClipSegment(
+        start_time=refined_start,
+        end_time=refined_end,
+        content=seg.content,
+        speaker_ids=seg.speaker_ids 
+    )
 
     # --- Parallel processing of transcript segments ---
     with concurrent.futures.ThreadPoolExecutor() as executor:

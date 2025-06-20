@@ -34,6 +34,7 @@ try:
     segments, _ = model.transcribe(
         audio_path,
         beam_size=3,
+        best_of=3,
         language="he",
         condition_on_previous_text=False,
         vad_filter=True,
@@ -59,5 +60,8 @@ try:
     sys.exit(0)
 
 except Exception as e:
-    print(json.dumps({"error": str(e)}))
+    if len(result) > 0:
+        print(json.dumps(result, ensure_ascii=False).replace('\n', ' ').replace('\r', ' ').strip(), flush=True)
+        sys.exit(0)
+    print(json.dumps({"error": str(e)}, ensure_ascii=False),flush=True)
     sys.exit(1)

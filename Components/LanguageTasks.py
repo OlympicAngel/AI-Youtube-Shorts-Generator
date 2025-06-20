@@ -1,32 +1,15 @@
-from typing import List, NotRequired, TypedDict
 
-class ClipSegment(TypedDict):
-    start_time: int
-    end_time: int
+from typing import List, Optional
+from pydantic import BaseModel, TypeAdapter
+
+class ClipSegment(BaseModel):
+    start_time: float
+    end_time: float
     content: str
-    speakers: NotRequired[List[str]]  # Optional field for speaker names
-
-# Function to extract start and end times
-def extract_times(json_string) -> List[ClipSegment]:
-    import json
-
-
-    try:
-        data = json.loads(json_string)
-        result: List[ClipSegment] = []
-
-        for item in data:
-            result.append({
-                "start_time": float(item["start"]),
-                "end_time": float(item["end"]),
-                "content": item["content"]
-            })
-
-        return result
-
-    except Exception as e:
-        print(f"Error in extract_times: {e}")
-        return []
+    speaker_ids: Optional[list[str]] = None  # Optional field for speaker names
+    
+class GPT_SelectedSegments(BaseModel):
+    selectedSegments: list[ClipSegment]
 
 def GetHighlight(Transcription,theme, test=False):
     from openai import OpenAI
@@ -38,64 +21,10 @@ def GetHighlight(Transcription,theme, test=False):
 
     if test:
         print(f"[not-ChatGPT]:using local json string for testing..")
-        json_string = """[
-  {
-    "start": "254.75",
-    "content": "כי זה בגדול ריק ומורטי זה סנדבוקס ענק שאפשר לעשות בו מלא שטויות וליהנות",
-    "end": "259.83"
-  },
-  {
-    "start": "268.99",
-    "content": "כי זה הערך העליון בריק ומורטי לקחת כל מיני דברים מגניבים",
-    "end": "272.27"
-  },
-  {
-    "start": "272.27",
-    "content": "מפופ קולצר מסייפיי כל הדברים הגיקים המגניבים האלה",
-    "end": "276.19"
-  },
-  {
-    "start": "276.19",
-    "content": "ולחבר אותם לכיף",
-    "end": "277.95"
-  },
-  {
-    "start": "286.59",
-    "content": "כמו מורטי מיינדבלוורס קייבל טבעי 12 טוטל ריקול",
-    "end": "290.31"
-  },
-  {
-    "start": "290.47",
-    "content": "מה זה הפרקים האלה תכלס",
-    "end": "291.55"
-  },
-  {
-    "start": "291.55",
-    "content": "מוצאים איזה תירוץ שנותן להם פשוט להראות לנו מלאמלא רילזים בגדול",
-    "end": "296.47"
-  },
-  {
-    "start": "296.47",
-    "content": "פרקים של דקה",
-    "end": "297.67"
-  },
-  {
-    "start": "297.67",
-    "content": "המוח שלהם עובד בתדרים האלה לא התכנון הכבד הספונטני",
-    "end": "301.71"
-  },
-  {
-    "start": "484.77",
-    "content": "שזה יותר זרם תודעה רפרנסים וצחוקים",
-    "end": "488.21"
-  },
-  {
-    "start": "511.19",
-    "content": "סדרה ענקית כיף גדול מושלמת לשכתא פשוט",
-    "end": "514.35"
-  }
-]"""
-        return extract_times(json_string)
+        adapter = TypeAdapter(List[ClipSegment])
+
+        return adapter.validate_python([ { "start_time": 195, "end_time": 197.52, "content": "אחי חיות זה נדיר יצא אני פשוט שאשכרה מעצמנו", "speaker_ids": [ "#06" ] }, { "start_time": 208.28, "end_time": 208.84, "content": "בואי מיצי", "speaker_ids": [ "#06" ] }, { "start_time": 220.76, "end_time": 222.92, "content": "אנחנו צריכים לתת לשם אנחנו נקרא לה רדנק", "speaker_ids": [ "#06" ] }, { "start_time": 223.88, "end_time": 226.56, "content": "יש שמה הדבר סירה", "speaker_ids": [ "#06" ] }, { "start_time": 246, "end_time": 249.16, "content": "קדימה רדניק אני סומך עליך שלא תמותי בשנייה שנגיע לשם איכשהו", "speaker_ids": [ "#06" ] }, { "start_time": 250.16, "end_time": 252.12, "content": "רגע למה לא הבאת איתך כבשה", "speaker_ids": [ "#04" ] }, { "start_time": 252.12, "end_time": 252.8, "content": "הבאתי רדניק", "speaker_ids": [ "#04" ] }, { "start_time": 253.36, "end_time": 254.76, "content": "פרניבולט קראתי לה רדניק", "speaker_ids": [ "#04", "#06" ] }, { "start_time": 264.96, "end_time": 268.4, "content": "קדימה בנות קדימה רדנקי יאללה קדימה", "speaker_ids": [ "#06" ] }, { "start_time": 268.4, "end_time": 271.08, "content": "לא רשר פלט מטומטם למה עשינו את זה פרק קודם", "speaker_ids": [ "#06" ] }, { "start_time": 273.32, "end_time": 274.64, "content": "תשארי פה רדנק בואי לפה", "speaker_ids": [ "#06", "#04" ] }, { "start_time": 274.64, "end_time": 276, "content": "מיצי זה הכבשה", "speaker_ids": [ "#06", "#04" ] }, { "start_time": 277.28, "end_time": 279.6, "content": "אני שונא את הפרשר פלט המטומטם שלך שיינים", "speaker_ids": [ "#06" ] }, { "start_time": 281.24, "end_time": 283.04, "content": "איפה מיצי תקרא לה", "speaker_ids": [ "#06" ] }, { "start_time": 283.44, "end_time": 284.36, "content": "על הגג", "speaker_ids": [ "#06", "#04" ] }, { "start_time": 284.36, "end_time": 286.48, "content": "מיצי על הגג לא", "speaker_ids": [ "#06" ] } ]
+        )
 
     print("Getting Highlight from Transcription ")
     model="gpt-4.1-2025-04-14"
@@ -120,7 +49,7 @@ def GetHighlight(Transcription,theme, test=False):
     tokenizer_encoding = tiktoken.get_encoding("o200k_base")
     tokens_input = len(tokenizer_encoding.encode(Transcription))
     token_cached = len(tokenizer_encoding.encode(system))
-    tokens_output = 13000 if isReasoning else 800  # estimate/completion length
+    tokens_output = 13000 if isReasoning else 600  # estimate/completion length
     total_cost = (
         (tokens_input + token_cached) * pricing[model]["input"] +
         tokens_output * pricing[model]["output"]
@@ -138,11 +67,12 @@ def GetHighlight(Transcription,theme, test=False):
     try:
         print(f"[ChatGPT]:running chat completions on model {model}...")
 
-        response = client.responses.create(
+        response = client.responses.parse(
           model=model,
-          max_output_tokens =  20000, # limit the output to 20k tokens
-        instructions=system,
-        input=Transcription
+          max_output_tokens =  1500, # limit the output to 20k tokens
+          instructions=system,
+          input=Transcription,
+          text_format= GPT_SelectedSegments
         )
 
         cached_input_tokens = response.usage.input_tokens_details.cached_tokens
@@ -155,27 +85,18 @@ def GetHighlight(Transcription,theme, test=False):
         total_cost = (price_input + price_output + price_cached_input) / 1000000
         print(f"[ChatGPT]: API call cost: ${total_cost:.6f} w/ {output_tokens} output tokens.")
 
-        json_string = response.output_text
-        json_string = json_string.replace("json", "")
-        json_string = json_string.replace("```", "").split("]")[0] + "]" # sometimes gpt will output after the json
+        res = response.output_parsed.selectedSegments
         
-        print(f"[ChatGPT]: response - {json_string}")
+        print(f"[ChatGPT]: response - {len(res)}")
 
-        res = extract_times(json_string)
-        firstItem = res[0]
-        if firstItem["end_time"] == firstItem["start_time"]:
-            Ask = input("[Chat-GPT]: Error - Get Highlights again[{total_cost}$] (y/n) -> ").lower()
-            if Ask == "y":
-                res = GetHighlight(Transcription,theme, test)
-            else:
-                exit()
+        if res == None:
+            raise RuntimeError("Failed to generate short transcript.")
         
         print(f"AI picked {len(res)} segments")
         
         return res
     except Exception as e:
-        print(f"[Chat-GPT]: Error in GetHighlight: {e}")
-        exit()
+        raise RuntimeError(f"[Chat-GPT]: Error in GetHighlight: {e}")
 
 def readPromptFile(filename):
     import os

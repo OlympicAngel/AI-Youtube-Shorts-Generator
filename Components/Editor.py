@@ -143,15 +143,15 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
     os.makedirs("temp_clips", exist_ok=True)
 
     n = len(segments)
-    trans_needed = [(segments[i+1]['start_time'] - segments[i]['end_time'] > gap_threshold)
+    trans_needed = [(segments[i+1].start_time - segments[i].end_time > gap_threshold)
                     for i in range(n-1)]
 
     # Step 1: cut each segment, extending by pad if needed
     batch_size = 8  # Number of threads to run in parallel
     
     def cut_wrapper(i, clipSeg):
-        start = clipSeg['start_time'] - (transitionPad if i > 0 and trans_needed[i-1] else 0) # if previous segment needs transition add START padding
-        end = clipSeg['end_time'] + (transitionPad if i < n-1 and trans_needed[i] else 0) # if current segment needs transition add END padding
+        start = clipSeg.start_time - (transitionPad if i > 0 and trans_needed[i-1] else 0) # if previous segment needs transition add START padding
+        end = clipSeg.end_time + (transitionPad if i < n-1 and trans_needed[i] else 0) # if current segment needs transition add END padding
         start = max(0, start)
         end = min(duration, end)
         cut_segment(input_file, max(0, start),  min(duration, end), f"temp_clips/seg{i}.mp4", use_gpu)
@@ -169,7 +169,7 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
     i = 0
     while i < n:
         seg_file = f"temp_clips/seg{i}.mp4"
-        seg_duration = segments[i]['end_time'] - segments[i]['start_time'] # get duration of current segment
+        seg_duration = segments[i].end_time - segments[i].start_time # get duration of current segment
 
         # Check if transition is needed before / current segment
         if (i>0 and trans_needed[i-1]) or (i<n-1 and trans_needed[i]):
@@ -214,7 +214,7 @@ def edit_video_ffmpeg_py(input_file: str, output_file: str,
             
             # Also include rest of segment i+1 after transition pad
             base_file = f"temp_clips/seg{i+1}base.mp4"
-            orig_len_next = segments[i+1]['end_time'] - segments[i+1]['start_time']
+            orig_len_next = segments[i+1].end_time - segments[i+1].start_time
             (
                 ffmpeg
                 .input(f"temp_clips/seg{i+1}.mp4", ss=transitionPad, t=orig_len_next, hwaccel='cuda' if use_gpu else "none")

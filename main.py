@@ -64,14 +64,14 @@ TransText = TransText[:-1]  # remove last comma or \n
 # get highlights from transcriptions using GPT
 clipSegments = GetHighlight(TransText,shortTheme,test)
 if len(clipSegments) == 0: # Error no highlights found
-    print("Error in getting highlight")
+    raise TypeError("Error in getting highlight")
 
 # refine the clip segments using VAD
 refined_clipSegments = refine_transcript(Audio, clipSegments) if not test else clipSegments
 
 # trim video based on clip segments
 trimmedVideoPath = "trimmed.mp4"
-edit_video_ffmpeg_py(Vid,trimmedVideoPath,clipSegments,gap_threshold=15,motionBlurType=None)
+edit_video_ffmpeg_py(Vid,trimmedVideoPath,refined_clipSegments,gap_threshold=15,motionBlurType=None)
 
 
 # crop trimmed video to vertical format

@@ -16,8 +16,7 @@ def transcribeAudio(video_path: str,audio_path:str) -> list[TranscribeSegmentTyp
         transcriptions = transcribeAudio_logic(audio_path)
         save_transcription(cache_file, transcriptions) # save it 
         if len(transcriptions) == 0:
-            print("No transcriptions found")
-            exit()
+            raise RuntimeError("No transcriptions found")
         print("Transcription saved to cache at '"+cache_file+"'.")
         
     return transcriptions
@@ -62,8 +61,7 @@ def transcribeAudio_logic(audio_path: str):
         return output_lines
 
     except Exception as e:
-        print("Transcription Error:", json.dumps({"error": str(e)}))
-        exit()
+        raise RuntimeError("Transcription Error:", json.dumps({"error": str(e)}))
 
 
 # utils

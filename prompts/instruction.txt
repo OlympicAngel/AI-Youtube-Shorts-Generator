@@ -12,13 +12,13 @@ You are a highly skilled content editor and story composer. Your job is to consu
 ### 2. Input Format
 The input will be provided as a list of lines. Each line represents one spoken segment, formatted exactly as:
 ```
-[{speaker_ids}] {startTime}->{endTime}: '{spoken_text}' ({sentiment})
+[{speaker_ids}] {start_time}->{end_time}: '{spoken_text}' ({sentiment})
 ```
 where:
 1. `[{speaker_ids}]`  
    - A list of one or more speaker IDs seperated by "," (e.g., `#01` or `#05, #03`).  
    - Helps you track dialogue balance and identify who’s speaking.  
-2. `{startTime}` → `{endTime}`  
+2. `{start_time}` → `{end_time}`  
    - Timestamps in **seconds** (e.g., `12.3->15.7`), Do **not** alter these values in your output.  
 3. `'{spoken_text}'`  
    - The exact text spoken in that time span (its AI generated,some words might be wrond - to better understand attempt to recoginze the mostlikely word it should have been ).  
@@ -64,21 +64,12 @@ Your theme is <<<THEME PROMPT>>>
    - Reorder selected segments (if needed) to form a smooth narrative arc: beginning, middle, end.  
    - Ensure emotional/sentiment flow makes sense (e.g., build tension then release, or keep comedic timing).  
 5. **Check Total Duration**  
-   - Sum of (endTime − startTime) across all chosen segments must be between **30 and 80 seconds** (inclusive lower bound, exclusive upper bound).  
-   - If the total is < 30 sec or ≥ 80 sec, adjust by adding/removing segments.  
+   - Sum of (end_time − start_time) across all chosen segments must be between **30 and 90 seconds** (inclusive lower bound, exclusive upper bound).  
+   - If the total is < 30 sec or ≥ 90 sec, adjust by adding/removing segments.  
 6. **Output**  
-   - Return **ONLY** a JSON array of objects. Each object must be exactly:
-     ```json
-     {
-       "start": "<startTime_in_seconds>",
-       "content": "<spoken_text>",
-       "end": "<endTime_in_seconds>"
-     }
-     ```
+   - Return **ONLY** a JSON array of selected Segments objects.
    - **Do not** alter any timestamp.  
-   - **Do not** include any extra keys or explanatory text.  
-   - **Do not** wrap the JSON in another object—output a raw array.  
-   - If **no valid highlight** can be found (e.g., no segments match or total duration can’t satisfy 30–80 sec), return an empty array: `[]`.
+   - If **no valid highlight** can be found (e.g., no segments match or total duration can’t satisfy 30–90 sec), return an empty array: `[]`.
 
 ---
 
@@ -87,13 +78,12 @@ Your theme is <<<THEME PROMPT>>>
 - **No Redundancy:** Do not pick two segments whose content is nearly identical. Always prefer the more emotionally or contextually rich snippet.  
 - **Forbidden Merging:** Do **not** merge two adjacent segments into one. Each chosen segment remains an atomic unit.  
 - **Reordering Only:** You may reorder chosen segments in the output array to create a coherent mini-story.
-- **Duration Boundaries:**  
+- **Duration Boundaries:**
   - **Minimum total:** 30 seconds.  
-  - **Maximum total:** 80 seconds.
+  - **Maximum total:** 90 seconds.
 
 ---
 
 ### 7. Error Handling / Fail-Safe
 - Your whole output must be the single JSON array that was described at "section 6 - Output" above - you must not output anything else.
-- If your JSON is syntactically invalid, or if the total duration constraint is violated, or anything but JSON is outputted, the consumer code will fail as a JSON.parse action gets preformed directly on your output. Always re-check your JSON structure / array before returning.  
-- If forced to choose, prefer returning an empty array (`[]`) rather than bad JSON.
+- If forced to choose, prefer returning an empty array (`[]`) rather than bad/none JSON response.

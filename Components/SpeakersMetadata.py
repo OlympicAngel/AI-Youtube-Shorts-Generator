@@ -4,9 +4,6 @@ import torch
 from typing_extensions import Unpack
 from Components.Transcription import TranscribeSegmentType
 
-torch.backends.cuda.matmul.allow_tf32 = True
-torch.backends.cudnn.allow_tf32 = True
-
 prefix = "[SpeakersMetadata]: "
 
 speakerSegmentType = tuple[float, float, str]
@@ -15,6 +12,8 @@ TranscribeSegmentType_withSpeakers = tuple[Unpack[TranscribeSegmentType], List[s
 def get_speakers_metadata(audio_path):
     from pyannote.audio import Pipeline
     from pyannote.core import Annotation
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
 
     hf_token = os.getenv("HF_TOKEN")
     if not hf_token:

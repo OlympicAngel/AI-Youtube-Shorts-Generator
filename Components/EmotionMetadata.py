@@ -3,7 +3,7 @@ from Components.SpeakersMetadata import TranscribeSegmentType_withSpeakers
 
 TranscribeSegmentType_withSpeakersAndSentiment = tuple[Unpack[TranscribeSegmentType_withSpeakers], str]
 
-prefix = "[SpeakersMetadata]: "
+prefix = "[EmotionsMetadata]: "
 
 class SentimentResult(TypedDict):
     label: str
@@ -14,29 +14,27 @@ def add_hebrew_sentiment(transcriptions: List[TranscribeSegmentType_withSpeakers
     import tqdm
 
     print(prefix + "Adding Hebrew sentiment analysis to transcriptions...")
-    
+
     # Load Hebrew sentiment model
     model_name = "dicta-il/dictabert-sentiment"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_name
-    )
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
     sentiment_analysis = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0)
 
-    
-    results = []
     full_texts = [seg[0] for seg in transcriptions]
     max_chars = 512
     min_chars_needed = 60
 
+    contexts = []
+    meta:List[tuple[str,float,float,List[str]]] = []
 
     for i, segment in tqdm.tqdm(enumerate(transcriptions), total=len(transcriptions)):
         content, t_start, t_end, speakers = segment
-    
+
         context_parts = [content]
         context_len = len(content)
 
-        max_offset = 4  # 2 prev + 2 next = 4 tries
+        max_offset = 4  # 2 previous + 2 next
         offset = 1
         directions_used = {"prev": 0, "next": 0}
 
@@ -56,13 +54,20 @@ def add_hebrew_sentiment(transcriptions: List[TranscribeSegmentType_withSpeakers
                     context_len += len(text)
                     directions_used["next"] += 1
             offset += 1
-    
-        context = " ".join(context_parts)[:max_chars]
-        result: SentimentResult = sentiment_analysis(context,batch_size=64)[0]
-        map = {'Neutral': 'neu', 'Negative': 'neg', 'Positive': 'pos'}
-        sentiment_str = f"{map[result['label']]}"
-        results.append((content, t_start, t_end, speakers, sentiment_str))
 
+        context = " ".join(context_parts)[:max_chars]
+        contexts.append(context)
+        meta.append((content, t_start, t_end, speakers))
+
+    # Batch sentiment analysis
+    predictions = sentiment_analysis(contexts, batch_size=32)
+
+    # Map results to sentiment tags
+    label_map = {'Neutral': 'neu', 'Negative': 'neg', 'Positive': 'pos'}
+    results = [
+        (content, t_start, t_end, speakers, label_map[pred['label']])
+        for (content, t_start, t_end, speakers), pred in zip(meta, predictions)
+    ]
 
     print(prefix + "done.")
     return results
