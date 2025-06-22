@@ -80,5 +80,5 @@ crop_to_vertical_debug(trimmedVideoPath, croppedVideoPath,False)
 
 # combine trimmed and cropped videos into a single short
 uuid = uuid.uuid4()
-combine_videos(trimmedVideoPath, croppedVideoPath, f"Generated Shorts/{shortTheme.split("/")[0]}_{Vid.split("\\").pop().split('.')[0]}_{str(uuid)}.mp4")
+combine_videos(trimmedVideoPath, croppedVideoPath, f"Generated Shorts/{shortTheme.split("/")[0].strip()}_{Vid.replace("/","\\").split("\\").pop().split('.')[0]}_{str(uuid)}.mp4")
 print("--- DONE in %s seconds ---" % (time.time() - start_time))
