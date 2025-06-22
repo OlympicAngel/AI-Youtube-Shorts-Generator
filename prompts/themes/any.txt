@@ -1,5 +1,5 @@
 Wildcard / Attention-Seeker,
-Select segments that are:
+Select segments that match the tone and are part of the same core:
 - **Any combination** of comedy, drama, thrill, or education—optimized purely to grab and hold attention.  
 - Look for the **most emotionally charged moments** (whether “pos” or “neg”) and/or the funniest lines.  
 - You can mix speaker dialogues of different sentiments as long as each chosen segment **contributes** to an attention-grabbing arc.  

@@ -1,5 +1,5 @@
 Informational / Educational,
-Select segments that are:
+Select segments that match the tone and are part of the same core:
 - **Fact-driven or instructional** (neutral/“neu” or mildly “pos” sentiment).  
 - Focus on **knowledge transfer**—definitions, “how-to” steps, scientific or cultural facts, life hacks.  
 - Dialogue where one speaker explains and one listens (use speaker IDs to maintain clarity).  

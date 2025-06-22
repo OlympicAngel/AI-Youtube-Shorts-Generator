@@ -1,5 +1,5 @@
 Emotional / Motivational / Love,
-Select segments that are:
+Select segments that match the tone and are part of the same core:
 - **Emotional or motivational** (sentiments swing from “pos” to “neg” or vice versa to build drama).  
 - Include **heartwarming or heartbreaking narratives** (romance, betrayal, friendship).  
 - Scenes where a speaker expresses vulnerability, hope, or inspiration—especially if another speaker responds.  

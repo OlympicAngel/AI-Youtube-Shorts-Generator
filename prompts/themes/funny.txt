@@ -1,5 +1,5 @@
 Funny / Light / Comedy,
-Select segments that are:
+Select segments that match the tone and are part of the same core:
 - **Humorous or comedic** (positive sentiment, playful banter, dark humor, “funny-dialogs” between speakers).  
 - Emphasize **lighthearted trolls, silly, pranks, comedy bits**, or any “hilarious moments.”  
 - Prefer segments where speakers show positive sentiment (“pos”), or even slightly “neu” if it leads into/comes out of a comedic payoff.  

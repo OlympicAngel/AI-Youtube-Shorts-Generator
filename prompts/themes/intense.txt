@@ -1,5 +1,5 @@
 Intense / Action / Thriller,
-Select segments that are:
+Select segments that match the tone and are part of the same core:
 - **High-energy or suspenseful** (mostly “neg” or “neu” evolving into “pos” if there’s a resolution).  
 - Focus on **dramatic moments, shocking reveals, or conflict**.  
 - Scenes where speaker sentiment is tense—arguments, urgent exclamations, or cliffhangers.  

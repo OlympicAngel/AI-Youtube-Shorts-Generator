@@ -54,7 +54,6 @@ def refine_transcript(audio_path:str, transcript: List[ClipSegment]):
         start_time=refined_start,
         end_time=refined_end,
         content=seg.content,
-        speaker_ids=seg.speaker_ids 
     )
 
     # --- Parallel processing of transcript segments ---

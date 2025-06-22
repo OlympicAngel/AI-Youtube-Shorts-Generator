@@ -6,9 +6,9 @@ class ClipSegment(BaseModel):
     start_time: float
     end_time: float
     content: str
-    speaker_ids: Optional[list[str]] = None  # Optional field for speaker names
     
 class GPT_SelectedSegments(BaseModel):
+    highlightTitle:str
     selectedSegments: list[ClipSegment]
 
 def GetHighlight(Transcription,theme, test=False):
@@ -49,7 +49,7 @@ def GetHighlight(Transcription,theme, test=False):
     tokenizer_encoding = tiktoken.get_encoding("o200k_base")
     tokens_input = len(tokenizer_encoding.encode(Transcription))
     token_cached = len(tokenizer_encoding.encode(system))
-    tokens_output = 13000 if isReasoning else 600  # estimate/completion length
+    tokens_output = 14000 if isReasoning else 800  # estimate/completion length
     total_cost = (
         (tokens_input + token_cached) * pricing[model]["input"] +
         tokens_output * pricing[model]["output"]
